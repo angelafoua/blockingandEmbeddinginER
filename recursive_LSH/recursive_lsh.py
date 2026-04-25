@@ -13,6 +13,7 @@ Run as a script to process the bundled S12PX.txt sample:
 """
 
 import argparse
+import csv
 import os
 import sys
 import time
@@ -101,6 +102,19 @@ def export_blocks_to_excel(final_blocks, refDict, filename="recursive_lsh_result
             ws.append([label_str, refID, ", ".join(tokens)])
 
     wb.save(filename)
+    print(f"Saved final blocks to: {filename}")
+
+
+def export_blocks_to_csv(final_blocks, refDict, filename="recursive_lsh_results.csv"):
+    """Write the final blocks to a CSV file (no extra dependencies)."""
+    with open(filename, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Block Label", "Record ID", "Tokens"])
+        for label, refIDs in final_blocks.items():
+            label_str = " ".join(label) if isinstance(label, tuple) else str(label)
+            for refID in refIDs:
+                tokens = refDict.get(refID, [])
+                writer.writerow([label_str, refID, ", ".join(tokens)])
     print(f"Saved final blocks to: {filename}")
 
 
@@ -206,17 +220,23 @@ def main(argv=None):
                 os.path.dirname(os.path.abspath(args.input)),
                 f"{base}_results.xlsx",
             )
+        export_start = time.time()
         try:
-            export_start = time.time()
             export_blocks_to_excel(
                 results["final_blocks"],
                 results["cleaned_refDict"],
                 out_path,
             )
-            export_time = time.time() - export_start
-            print(f"Excel export: {export_time:.3f}s")
         except ImportError:
-            print("openpyxl not available; skipping Excel export.")
+            csv_path = os.path.splitext(out_path)[0] + ".csv"
+            print(f"openpyxl not available; falling back to CSV: {csv_path}")
+            export_blocks_to_csv(
+                results["final_blocks"],
+                results["cleaned_refDict"],
+                csv_path,
+            )
+        export_time = time.time() - export_start
+        print(f"Export: {export_time:.3f}s")
 
     overall_time = time.time() - overall_start
     print(f"\nTotal time: {overall_time:.3f}s (load: {load_time:.3f}s + "
