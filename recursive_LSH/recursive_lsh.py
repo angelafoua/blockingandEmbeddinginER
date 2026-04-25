@@ -14,6 +14,7 @@ Run as a script to process the bundled S12PX.txt sample:
 
 import argparse
 import csv
+import datetime
 import os
 import sys
 import time
@@ -84,6 +85,26 @@ def run_pipeline(refDict,
         "final_blocks":        final_blocks,
         "timing":              timing,
     }
+
+
+class _Tee:
+    """Duplicate every write to a list of streams (e.g. stdout + a file)."""
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, data):
+        for s in self.streams:
+            try:
+                s.write(data)
+            except Exception:
+                pass
+
+    def flush(self):
+        for s in self.streams:
+            try:
+                s.flush()
+            except Exception:
+                pass
 
 
 def export_blocks_to_excel(final_blocks, refDict, filename="recursive_lsh_results.xlsx"):
@@ -183,6 +204,14 @@ def _parse_args(argv=None):
         "--no-visualize", action="store_true",
         help="Skip generating the HTML visualization.",
     )
+    parser.add_argument(
+        "--log-file", default=None,
+        help="Path to write a run log (default: <input>_pipeline.log).",
+    )
+    parser.add_argument(
+        "--no-log", action="store_true",
+        help="Skip writing the pipeline log file.",
+    )
     return parser.parse_args(argv)
 
 
@@ -194,87 +223,115 @@ def main(argv=None):
         print(f"Error: input file not found: {args.input}", file=sys.stderr)
         return 1
 
-    load_start = time.time()
-    refDict = build_refDict.tokenizeInput(args.input, delimiter=args.delimiter)
-    load_time = time.time() - load_start
-    print(f"Loaded {len(refDict)} records from {args.input} ({load_time:.3f}s)")
-
-    results = run_pipeline(
-        refDict,
-        max_frequency=args.max_frequency,
-        variation_method=args.variation_method,
-        similarity_threshold=args.similarity_threshold,
-        use_lsh=args.use_lsh,
-        num_perm=args.num_perm,
-        lsh_threshold=args.lsh_threshold,
-        max_depth=args.max_depth,
-        min_bucket_size=args.min_bucket_size,
-    )
-
-    print(f"\nFinal blocks: {len(results['final_blocks'])}")
-    print(f"Candidate pairs: {len(results['candidate_pairs'])}")
-
-    print("\n=== Timing Breakdown ===")
-    timing = results["timing"]
-    for phase, elapsed in timing.items():
-        print(f"{phase}: {elapsed:.3f}s")
-
-    pipeline_time = sum(timing.values())
-    export_time = 0
-    if not args.no_export:
-        out_path = args.export_xlsx
-        if out_path is None:
+    log_handle = None
+    log_path = None
+    original_stdout = sys.stdout
+    if not args.no_log:
+        log_path = args.log_file
+        if log_path is None:
             base, _ = os.path.splitext(os.path.basename(args.input))
-            out_path = os.path.join(
+            log_path = os.path.join(
                 os.path.dirname(os.path.abspath(args.input)),
-                f"{base}_results.xlsx",
+                f"{base}_pipeline.log",
             )
-        export_start = time.time()
-        try:
-            export_blocks_to_excel(
-                results["final_blocks"],
-                results["cleaned_refDict"],
-                out_path,
-            )
-        except ImportError:
-            csv_path = os.path.splitext(out_path)[0] + ".csv"
-            print(f"openpyxl not available; falling back to CSV: {csv_path}")
-            export_blocks_to_csv(
-                results["final_blocks"],
-                results["cleaned_refDict"],
-                csv_path,
-            )
-        export_time = time.time() - export_start
-        print(f"Export: {export_time:.3f}s")
+        log_handle = open(log_path, "w", encoding="utf-8")
+        sys.stdout = _Tee(original_stdout, log_handle)
+        print(f"=== Recursive LSH Pipeline Run ===")
+        print(f"Started:   {datetime.datetime.now().isoformat(timespec='seconds')}")
+        print(f"Input:     {os.path.abspath(args.input)}")
+        print(f"Args:      {vars(args)}")
+        print(f"Log file:  {log_path}")
+        print()
 
-    viz_time = 0
-    if not args.no_visualize:
-        viz_path = args.visualize_html
-        if viz_path is None:
-            base, _ = os.path.splitext(os.path.basename(args.input))
-            viz_path = os.path.join(
-                os.path.dirname(os.path.abspath(args.input)),
-                f"{base}_clusters.html",
-            )
-        viz_start = time.time()
-        try:
-            from visualize import build_visualization
-            build_visualization(
-                results["cleaned_refDict"],
-                results["final_blocks"],
-                viz_path,
-            )
-        except Exception as e:
-            print(f"Visualization failed: {e}", file=sys.stderr)
-        viz_time = time.time() - viz_start
-        print(f"Visualization: {viz_time:.3f}s")
+    try:
+        load_start = time.time()
+        refDict = build_refDict.tokenizeInput(args.input, delimiter=args.delimiter)
+        load_time = time.time() - load_start
+        print(f"Loaded {len(refDict)} records from {args.input} ({load_time:.3f}s)")
 
-    overall_time = time.time() - overall_start
-    print(f"\nTotal time: {overall_time:.3f}s (load: {load_time:.3f}s + "
-          f"pipeline: {pipeline_time:.3f}s + export: {export_time:.3f}s + "
-          f"viz: {viz_time:.3f}s)")
+        results = run_pipeline(
+            refDict,
+            max_frequency=args.max_frequency,
+            variation_method=args.variation_method,
+            similarity_threshold=args.similarity_threshold,
+            use_lsh=args.use_lsh,
+            num_perm=args.num_perm,
+            lsh_threshold=args.lsh_threshold,
+            max_depth=args.max_depth,
+            min_bucket_size=args.min_bucket_size,
+        )
 
-    return 0
+        print(f"\nFinal blocks: {len(results['final_blocks'])}")
+        print(f"Candidate pairs: {len(results['candidate_pairs'])}")
+
+        print("\n=== Timing Breakdown ===")
+        timing = results["timing"]
+        for phase, elapsed in timing.items():
+            print(f"{phase}: {elapsed:.3f}s")
+
+        pipeline_time = sum(timing.values())
+        export_time = 0
+        if not args.no_export:
+            out_path = args.export_xlsx
+            if out_path is None:
+                base, _ = os.path.splitext(os.path.basename(args.input))
+                out_path = os.path.join(
+                    os.path.dirname(os.path.abspath(args.input)),
+                    f"{base}_results.xlsx",
+                )
+            export_start = time.time()
+            try:
+                export_blocks_to_excel(
+                    results["final_blocks"],
+                    results["cleaned_refDict"],
+                    out_path,
+                )
+            except ImportError:
+                csv_path = os.path.splitext(out_path)[0] + ".csv"
+                print(f"openpyxl not available; falling back to CSV: {csv_path}")
+                export_blocks_to_csv(
+                    results["final_blocks"],
+                    results["cleaned_refDict"],
+                    csv_path,
+                )
+            export_time = time.time() - export_start
+            print(f"Export: {export_time:.3f}s")
+
+        viz_time = 0
+        if not args.no_visualize:
+            viz_path = args.visualize_html
+            if viz_path is None:
+                base, _ = os.path.splitext(os.path.basename(args.input))
+                viz_path = os.path.join(
+                    os.path.dirname(os.path.abspath(args.input)),
+                    f"{base}_clusters.html",
+                )
+            viz_start = time.time()
+            try:
+                from visualize import build_visualization
+                build_visualization(
+                    results["cleaned_refDict"],
+                    results["final_blocks"],
+                    viz_path,
+                )
+            except Exception as e:
+                print(f"Visualization failed: {e}", file=sys.stderr)
+            viz_time = time.time() - viz_start
+            print(f"Visualization: {viz_time:.3f}s")
+
+        overall_time = time.time() - overall_start
+        print(f"\nTotal time: {overall_time:.3f}s (load: {load_time:.3f}s + "
+              f"pipeline: {pipeline_time:.3f}s + export: {export_time:.3f}s + "
+              f"viz: {viz_time:.3f}s)")
+
+        if log_path:
+            print(f"Log written to: {log_path}")
+
+        return 0
+    finally:
+        if log_handle is not None:
+            sys.stdout = original_stdout
+            log_handle.close()
 
 
 if __name__ == "__main__":
