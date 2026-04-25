@@ -12,6 +12,7 @@ Run as a script to process the bundled S12PX.txt sample:
     python recursive_lsh.py [path/to/input.csv]
 """
 
+import argparse
 import os
 import sys
 
@@ -91,32 +92,109 @@ def export_blocks_to_excel(final_blocks, refDict, filename="recursive_lsh_result
     print(f"Saved final blocks to: {filename}")
 
 
-if __name__ == "__main__":
+def _parse_args(argv=None):
     here = os.path.dirname(os.path.abspath(__file__))
     default_input = os.path.join(here, "S12PX.txt")
-    input_path = sys.argv[1] if len(sys.argv) > 1 else default_input
 
-    refDict = build_refDict.tokenizeInput(input_path)
-    print(f"Loaded {len(refDict)} records from {input_path}")
+    parser = argparse.ArgumentParser(
+        description="Run the recursive LSH blocking pipeline on a CSV-style file."
+    )
+    parser.add_argument(
+        "input", nargs="?", default=default_input,
+        help=f"Path to the input file (default: {default_input}).",
+    )
+    parser.add_argument(
+        "--delimiter", default=",",
+        help="Field delimiter for the input file (default: ',').",
+    )
+    parser.add_argument(
+        "--max-frequency", type=int, default=6,
+        help="Phase 0: drop tokens whose document frequency exceeds this (default: 6).",
+    )
+    parser.add_argument(
+        "--variation-method", choices=["fuzzy", "phonetic", "manual"],
+        default="fuzzy",
+        help="Phase 0 variation method (default: fuzzy).",
+    )
+    parser.add_argument(
+        "--similarity-threshold", type=int, default=85,
+        help="Phase 0 fuzzy-match similarity threshold 0-100 (default: 85).",
+    )
+    parser.add_argument(
+        "--use-lsh", action="store_true",
+        help="Phase 2: use MinHash-LSH bucketing (requires datasketch).",
+    )
+    parser.add_argument(
+        "--num-perm", type=int, default=128,
+        help="Phase 2 LSH MinHash permutations (default: 128).",
+    )
+    parser.add_argument(
+        "--lsh-threshold", type=float, default=0.5,
+        help="Phase 2 LSH bucketing threshold (default: 0.5).",
+    )
+    parser.add_argument(
+        "--max-depth", type=int, default=3,
+        help="Phase 3 recursion depth limit (default: 3).",
+    )
+    parser.add_argument(
+        "--min-bucket-size", type=int, default=2,
+        help="Phase 3: stop refining blocks at or below this size (default: 2).",
+    )
+    parser.add_argument(
+        "--export-xlsx", default=None,
+        help="Optional path to write final blocks as .xlsx (requires openpyxl).",
+    )
+    parser.add_argument(
+        "--no-export", action="store_true",
+        help="Skip writing the default <input>_results.xlsx file.",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = _parse_args(argv)
+
+    if not os.path.isfile(args.input):
+        print(f"Error: input file not found: {args.input}", file=sys.stderr)
+        return 1
+
+    refDict = build_refDict.tokenizeInput(args.input, delimiter=args.delimiter)
+    print(f"Loaded {len(refDict)} records from {args.input}")
 
     results = run_pipeline(
         refDict,
-        max_frequency=6,
-        variation_method="fuzzy",
-        similarity_threshold=85,
-        use_lsh=False,
-        max_depth=3,
-        min_bucket_size=2,
+        max_frequency=args.max_frequency,
+        variation_method=args.variation_method,
+        similarity_threshold=args.similarity_threshold,
+        use_lsh=args.use_lsh,
+        num_perm=args.num_perm,
+        lsh_threshold=args.lsh_threshold,
+        max_depth=args.max_depth,
+        min_bucket_size=args.min_bucket_size,
     )
 
     print(f"\nFinal blocks: {len(results['final_blocks'])}")
     print(f"Candidate pairs: {len(results['candidate_pairs'])}")
 
-    try:
-        export_blocks_to_excel(
-            results["final_blocks"],
-            results["cleaned_refDict"],
-            os.path.join(here, "recursive_lsh_results.xlsx"),
-        )
-    except ImportError:
-        print("openpyxl not available; skipping Excel export.")
+    if not args.no_export:
+        out_path = args.export_xlsx
+        if out_path is None:
+            base, _ = os.path.splitext(os.path.basename(args.input))
+            out_path = os.path.join(
+                os.path.dirname(os.path.abspath(args.input)),
+                f"{base}_results.xlsx",
+            )
+        try:
+            export_blocks_to_excel(
+                results["final_blocks"],
+                results["cleaned_refDict"],
+                out_path,
+            )
+        except ImportError:
+            print("openpyxl not available; skipping Excel export.")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
