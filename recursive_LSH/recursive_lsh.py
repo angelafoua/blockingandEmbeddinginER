@@ -174,6 +174,15 @@ def _parse_args(argv=None):
         "--no-export", action="store_true",
         help="Skip writing the default <input>_results.xlsx file.",
     )
+    parser.add_argument(
+        "--visualize-html", default=None,
+        help="Path to write the interactive HTML visualization "
+             "(default: <input>_clusters.html).",
+    )
+    parser.add_argument(
+        "--no-visualize", action="store_true",
+        help="Skip generating the HTML visualization.",
+    )
     return parser.parse_args(argv)
 
 
@@ -238,9 +247,32 @@ def main(argv=None):
         export_time = time.time() - export_start
         print(f"Export: {export_time:.3f}s")
 
+    viz_time = 0
+    if not args.no_visualize:
+        viz_path = args.visualize_html
+        if viz_path is None:
+            base, _ = os.path.splitext(os.path.basename(args.input))
+            viz_path = os.path.join(
+                os.path.dirname(os.path.abspath(args.input)),
+                f"{base}_clusters.html",
+            )
+        viz_start = time.time()
+        try:
+            from visualize import build_visualization
+            build_visualization(
+                results["cleaned_refDict"],
+                results["final_blocks"],
+                viz_path,
+            )
+        except Exception as e:
+            print(f"Visualization failed: {e}", file=sys.stderr)
+        viz_time = time.time() - viz_start
+        print(f"Visualization: {viz_time:.3f}s")
+
     overall_time = time.time() - overall_start
     print(f"\nTotal time: {overall_time:.3f}s (load: {load_time:.3f}s + "
-          f"pipeline: {pipeline_time:.3f}s + export: {export_time:.3f}s)")
+          f"pipeline: {pipeline_time:.3f}s + export: {export_time:.3f}s + "
+          f"viz: {viz_time:.3f}s)")
 
     return 0
 
