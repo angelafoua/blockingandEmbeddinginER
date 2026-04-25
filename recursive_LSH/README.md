@@ -1,280 +1,124 @@
-# Recursive LSH for Entity Resolution
+# Recursive LSH with Word Signatures - Documentation
 
-## Quick Overview
+## Overview
 
-This project implements a **Recursive Locality-Sensitive Hashing (LSH)** algorithm for entity resolution (deduplication) that handles real-world data quality issues.
+A token-based entity resolution system that handles data quality variations by creating word signatures and recursively refining blocks.
 
-### The Problem
-
-Entity records often have **data quality variations**:
-- Names: "John" vs "Jon" (typo)
-- Names: "Smith" vs "Smyth" (alternative spelling)
-- Locations: "New York" vs "NY" (abbreviation)
-
-Traditional token-based blocking treats these as different tokens, missing true duplicates.
-
-### The Solution
-
-1. **Create word signatures** that group variations together
-   - "john", "jon", "jhon" → all get signature `SIG_JOHN_001`
-   - "smith", "smyth" → all get signature `SIG_SMITH_001`
-
-2. **Use Recursive LSH** to efficiently find similar records
-   - Level 1: Group by all shared signatures
-   - Level 2: Refine groups by additional signatures
-   - Level 3: Further refinement for precision
-
-3. **Match and merge** duplicate records
-   - Compare records within buckets
-   - Apply matching rules
-   - Merge duplicates into canonical records
+**Problem:** Records with spelling variations (john/jon, smith/smyth) are treated as different tokens  
+**Solution:** Create signatures for similar words, then use recursive blocking to find duplicates
 
 ---
 
-## Quick Start
+## The 4 Phases
 
-### Installation
+### Phase 0: Token Frequency Analysis & Data Quality Generation
+Remove high-frequency tokens (noise) and generate data quality variations for each unique token.
+- Count token frequencies
+- Remove high-frequency tokens
+- Generate variations (fuzzy match, phonetic, or manual)
 
-```bash
-pip install -r requirements.txt
+**Output:** Cleaned tokens + Variation dictionary
+
+---
+
+### Phase 1: Hashing Keys for Token Variations
+Assign each unique token and its variations a consistent hashing key.
+- Group similar tokens together
+- Create token → hash key mapping
+- All variations of same concept get same hash key
+
+**Output:** token_hash_mapping, hash_key_records
+
+---
+
+### Phase 2: Blocking Based on Merging Tokens
+Create initial blocks by grouping records that share hash keys.
+- Create blocks for each hash key
+- Merge records across keys (records in multiple blocks together)
+- Generate candidate pairs
+
+**Output:** Initial blocks, candidate pairs
+
+---
+
+### Phase 3: Recursive Blocking Within Blocks
+Iteratively refine blocks to increase precision.
+- Identify distinguishing hash keys within blocks
+- Create sub-blocks based on more specific key matches
+- Recursively refine until can't block further
+
+**Output:** Final refined blocks
+
+---
+
+## Algorithm Flow
+
 ```
-
-### Basic Usage
-
-```python
-from pipeline.recursive_lsh_pipeline import RecursiveLSHPipeline
-import yaml
-
-# Load configuration
-with open('config/default_config.yaml') as f:
-    config = yaml.safe_load(f)
-
-# Create pipeline
-pipeline = RecursiveLSHPipeline(config)
-
-# Run on your records
-input_records = {
-    1: ["john", "smith", "new", "york"],
-    2: ["jon", "smith", "new", "york"],  # Duplicate of record 1
-    3: ["jane", "doe", "boston"],
-}
-
-# Get deduplicated results
-results = pipeline.run(input_records)
-
-# Print report
-pipeline.report()
-```
-
-### Evaluate on Test Data
-
-```python
-# Load test data with known duplicates
-from data.test_dataset import load_test_data, get_ground_truth
-
-test_records = load_test_data()
-ground_truth = get_ground_truth()
-
-# Run and evaluate
-results = pipeline.run(test_records)
-metrics = pipeline.evaluate(ground_truth)
-
-print(f"Precision: {metrics['precision']:.2%}")
-print(f"Recall: {metrics['recall']:.2%}")
-print(f"F1 Score: {metrics['f1']:.2%}")
+Raw Records
+     ↓
+[Phase 0] Token Frequency & Data Quality
+     ↓ (Remove noise, generate variations)
+     ↓
+Clean tokens + Variation dictionary
+     ↓
+[Phase 1] Create Hash Keys
+     ↓ (Map tokens to hash keys)
+     ↓
+Hash key mapping + Record hash key sets
+     ↓
+[Phase 2] Initial Blocking
+     ↓ (Group by shared keys)
+     ↓
+Initial blocks + Candidate pairs
+     ↓
+[Phase 3] Recursive Refinement
+     ↓ (Recursively split blocks)
+     ↓
+Final blocks (similar records grouped)
+     ↓
+Deduplicated Records
 ```
 
 ---
 
-## How It Works
+## Documentation Files
 
-### Step 1: Create Word Signatures
+- **README.md** - This overview
+- **PHASE_0.md** - Token frequency analysis & data quality generation
+- **PHASE_1.md** - Hashing keys for token variations
+- **PHASE_2.md** - Blocking based on merging tokens
+- **PHASE_3.md** - Recursive blocking within blocks
 
-Convert data quality variations into consistent signatures:
-
-```
-Input:  ["john", "jon", "jhon", "smith", "smyth"]
-Output: {
-    "john": "SIG_JOHN_001",
-    "jon": "SIG_JOHN_001",      ← Same signature
-    "jhon": "SIG_JOHN_001",     ← Same signature
-    "smith": "SIG_SMITH_001",
-    "smyth": "SIG_SMITH_001"    ← Same signature
-}
-```
-
-### Step 2: Convert Records to Signatures
-
-Replace words with their signatures:
-
-```
-Record 1: ["john", "smith", "new", "york"]
-         ↓
-Record 1: ["SIG_JOHN_001", "SIG_SMITH_001", "SIG_NEW_001", "SIG_YORK_001"]
-
-Record 2: ["jon", "smith", "new", "york"]
-         ↓
-Record 2: ["SIG_JOHN_001", "SIG_SMITH_001", "SIG_NEW_001", "SIG_YORK_001"]
-         ↑ Now identical!
-```
-
-### Step 3: Recursive LSH Bucketing
-
-```
-Level 1 (Initial):
-  Bucket A: [Record 1, Record 2, Record 5]  ← All share same signatures
-
-Level 2 (Refined):
-  Sub-bucket A1: [Record 1, Record 2]       ← More specific match
-  Sub-bucket A2: [Record 5]                 ← Different subset
-
-Level 3 (Further refined):
-  Final: [Record 1, Record 2]               ← Most specific group
-```
-
-### Step 4: Match Within Buckets
-
-```
-For Bucket A:
-  Compare Record 1 vs Record 2
-  Similarity: 95% match
-  → DUPLICATE
-```
-
-### Step 5: Merge Duplicates
-
-```
-Record 1: ["john", "smith", "new", "york"]
-Record 2: ["jon", "smith", "new", "york"]
-         ↓ Merge
-Canonical: ["john", "jon", "smith", "new", "york"]
-```
+Read each phase documentation for detailed implementation guidance.
 
 ---
 
-## Advantages Over Baselines
+## Key Concepts
 
-### vs. Token-Based Blocking (Your Algo1_2_v2_refined)
-- ✅ Handles data quality variations explicitly
-- ✅ Recursive refinement improves precision
-- ✅ More interpretable (signatures are explicit)
-- ❌ Requires defining signatures upfront
-
-### vs. Brute Force (Compare All Pairs)
-- ✅ LSH: O(n·log n) vs Brute Force: O(n²)
-- ✅ Scalable to millions of records
-- ✅ Can handle approximate matching
-
-### vs. Single-Level LSH
-- ✅ Recursive refinement reduces false positives
-- ✅ Progressive specificity improves precision
-- ❌ More complex to implement and tune
+**Token:** A single word/string element in a record
+**Hash Key:** Unique identifier for a group of token variations
+**Block:** Group of records sharing hash keys
+**Refinement:** Creating sub-blocks by adding more specific hash key requirements
+**Data Quality Variations:** Misspellings, abbreviations, alternative spellings of the same concept
 
 ---
 
 ## Configuration
 
-See `config/default_config.yaml`:
+Each phase has configuration parameters:
 
-```yaml
-signature:
-  method: 'fuzzy'              # 'fuzzy', 'phonetic', or 'manual'
-  similarity_threshold: 85     # 0-100, higher = more strict
+**Phase 0:**
+- `max_frequency`: Threshold for removing tokens
 
-lsh:
-  num_perm: 128                # MinHash signature size
-  threshold: 0.5               # Jaccard similarity threshold
-  max_depth: 3                 # Maximum recursion depth
-  min_bucket_size: 2           # Stop refining when bucket < this
+**Phase 1:**
+- `similarity_threshold`: For fuzzy matching (0-100)
 
-matching:
-  threshold: 0.8               # Record similarity threshold
-  method: 'jaccard'            # How to compute similarity
+**Phase 2:**
+- `num_perm`: MinHash permutations (for LSH optimization)
+- `lsh_threshold`: LSH bucketing threshold
 
-merging:
-  strategy: 'union'            # 'union', 'first', or 'vote'
-```
+**Phase 3:**
+- `max_depth`: Maximum recursion depth
+- `min_bucket_size`: Minimum records to continue refining
 
----
-
-## Project Structure
-
-```
-recursive_LSH/
-├── IMPLEMENTATION_PLAN.md    ← Detailed 5-week plan
-├── README.md                 ← This file
-├── USAGE.md                  ← Detailed usage guide
-├── config/                   ← Configuration files
-├── data/                     ← Test data and ground truth
-├── signatures/               ← Word signature generation
-├── lsh/                      ← LSH algorithms
-├── matching/                 ← Record matching rules
-├── merging/                  ← Duplicate merging
-├── pipeline/                 ← End-to-end pipeline
-├── validation/               ← Metrics and evaluation
-├── optimization/             ← Parameter tuning
-├── comparison/               ← Baseline comparisons
-├── notebooks/                ← Jupyter notebooks for exploration
-├── results/                  ← Results and reports
-└── tests/                    ← Unit tests
-```
-
----
-
-## Key Files to Start With
-
-1. **IMPLEMENTATION_PLAN.md** - Detailed 5-week development plan
-2. **USAGE.md** - How to use the pipeline
-3. **config/default_config.yaml** - Configuration parameters
-4. **data/test_dataset.py** - Test data with known duplicates
-5. **pipeline/recursive_lsh_pipeline.py** - Main pipeline code
-
----
-
-## Development Phases
-
-| Phase | Timeline | Focus |
-|-------|----------|-------|
-| 1 | Week 1 | Test data, word signatures |
-| 2 | Week 2 | Basic LSH, matching |
-| 3 | Week 3 | Recursive algorithm |
-| 4 | Week 4 | Integration & validation |
-| 5 | Week 5 | Testing & documentation |
-
-See `IMPLEMENTATION_PLAN.md` for detailed breakdown.
-
----
-
-## Validation & Metrics
-
-The project uses standard deduplication metrics:
-
-- **Precision**: Of the pairs we said match, how many actually match?
-- **Recall**: Of all true duplicates, how many did we find?
-- **F1 Score**: Harmonic mean of precision and recall
-
-Example:
-```
-Ground truth: 100 duplicate pairs exist
-Our algorithm found: 85 pairs
-Of those 85: 80 are correct, 5 are false positives
-
-Precision = 80/85 = 94%
-Recall = 80/100 = 80%
-F1 = 86.5%
-```
-
----
-
-## Next Steps
-
-1. **Read IMPLEMENTATION_PLAN.md** for detailed phases
-2. **Review config/default_config.yaml** to understand parameters
-3. **Start Phase 1**: Create test data and validation framework
-4. **Implement incrementally**: One phase at a time with validation
-
----
-
-## Questions?
-
-See USAGE.md for detailed examples and troubleshooting.
+See individual phase documentation for details.
