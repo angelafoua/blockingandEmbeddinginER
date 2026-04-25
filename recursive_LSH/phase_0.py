@@ -14,6 +14,7 @@ Outputs:
 """
 
 from collections import Counter
+from time import perf_counter
 
 
 def count_token_frequencies(refDict):
@@ -149,20 +150,32 @@ def generate_variations(refDict, method="fuzzy", similarity_threshold=85,
 def run_phase_0(refDict, max_frequency=60, method="fuzzy",
                 similarity_threshold=85, manual_map=None):
     """Execute Phase 0 end-to-end."""
+    t0 = perf_counter()
     tokenFreqDict = count_token_frequencies(refDict)
+    t_freq = perf_counter() - t0
+
+    t0 = perf_counter()
     cleaned_refDict, removed = remove_high_frequency_tokens(
         refDict, tokenFreqDict, max_frequency=max_frequency
     )
+    t_clean = perf_counter() - t0
+
+    t0 = perf_counter()
     variations_dict = generate_variations(
         cleaned_refDict,
         method=method,
         similarity_threshold=similarity_threshold,
         manual_map=manual_map,
     )
+    t_var = perf_counter() - t0
 
     print(f"[Phase 0] removed {len(removed)} high-frequency tokens "
           f"(threshold={max_frequency})")
     print(f"[Phase 0] generated variations for "
           f"{len(variations_dict)} unique tokens (method={method})")
+    print(f"[Phase 0]   step timings: "
+          f"count_freq={t_freq:.3f}s, "
+          f"remove_high_freq={t_clean:.3f}s, "
+          f"generate_variations={t_var:.3f}s")
 
     return cleaned_refDict, tokenFreqDict, variations_dict
