@@ -15,6 +15,7 @@ Run as a script to process the bundled S12PX.txt sample:
 import argparse
 import os
 import sys
+import time
 
 import build_refDict
 from phase_0 import run_phase_0
@@ -33,7 +34,10 @@ def run_pipeline(refDict,
                  lsh_threshold=0.5,
                  max_depth=3,
                  min_bucket_size=2):
-    """Run all four phases and return their outputs."""
+    """Run all four phases and return their outputs with timing."""
+    timing = {}
+
+    t0 = time.time()
     cleaned_refDict, tokenFreqDict, variations_dict = run_phase_0(
         refDict,
         max_frequency=max_frequency,
@@ -41,23 +45,30 @@ def run_pipeline(refDict,
         similarity_threshold=similarity_threshold,
         manual_map=manual_map,
     )
+    timing["Phase 0"] = time.time() - t0
 
+    t0 = time.time()
     token_hash_mapping, hash_to_tokens, hash_key_records = run_phase_1(
         cleaned_refDict, variations_dict
     )
+    timing["Phase 1"] = time.time() - t0
 
+    t0 = time.time()
     blocks_by_key, blocks_by_key_set, candidate_pairs = run_phase_2(
         hash_key_records,
         use_lsh=use_lsh,
         num_perm=num_perm,
         lsh_threshold=lsh_threshold,
     )
+    timing["Phase 2"] = time.time() - t0
 
+    t0 = time.time()
     final_blocks = run_phase_3(
         blocks_by_key_set, hash_key_records,
         max_depth=max_depth,
         min_bucket_size=min_bucket_size,
     )
+    timing["Phase 3"] = time.time() - t0
 
     return {
         "cleaned_refDict":     cleaned_refDict,
@@ -70,6 +81,7 @@ def run_pipeline(refDict,
         "blocks_by_key_set":   blocks_by_key_set,
         "candidate_pairs":     candidate_pairs,
         "final_blocks":        final_blocks,
+        "timing":              timing,
     }
 
 
@@ -152,14 +164,17 @@ def _parse_args(argv=None):
 
 
 def main(argv=None):
+    overall_start = time.time()
     args = _parse_args(argv)
 
     if not os.path.isfile(args.input):
         print(f"Error: input file not found: {args.input}", file=sys.stderr)
         return 1
 
+    load_start = time.time()
     refDict = build_refDict.tokenizeInput(args.input, delimiter=args.delimiter)
-    print(f"Loaded {len(refDict)} records from {args.input}")
+    load_time = time.time() - load_start
+    print(f"Loaded {len(refDict)} records from {args.input} ({load_time:.3f}s)")
 
     results = run_pipeline(
         refDict,
@@ -176,6 +191,13 @@ def main(argv=None):
     print(f"\nFinal blocks: {len(results['final_blocks'])}")
     print(f"Candidate pairs: {len(results['candidate_pairs'])}")
 
+    print("\n=== Timing Breakdown ===")
+    timing = results["timing"]
+    for phase, elapsed in timing.items():
+        print(f"{phase}: {elapsed:.3f}s")
+
+    pipeline_time = sum(timing.values())
+    export_time = 0
     if not args.no_export:
         out_path = args.export_xlsx
         if out_path is None:
@@ -185,13 +207,20 @@ def main(argv=None):
                 f"{base}_results.xlsx",
             )
         try:
+            export_start = time.time()
             export_blocks_to_excel(
                 results["final_blocks"],
                 results["cleaned_refDict"],
                 out_path,
             )
+            export_time = time.time() - export_start
+            print(f"Excel export: {export_time:.3f}s")
         except ImportError:
             print("openpyxl not available; skipping Excel export.")
+
+    overall_time = time.time() - overall_start
+    print(f"\nTotal time: {overall_time:.3f}s (load: {load_time:.3f}s + "
+          f"pipeline: {pipeline_time:.3f}s + export: {export_time:.3f}s)")
 
     return 0
 
