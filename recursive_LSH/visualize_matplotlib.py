@@ -40,56 +40,42 @@ def sunflower(n, radius):
 
 
 def pack_circles(radii):
-    """Greedy packing: for each circle (largest first), grow a search radius
-    out from the origin and place the circle at the first non-overlapping
-    spot found. Returns centers in input order.
+    """Row-pack circles into a roughly square area. Sort by radius desc, then
+    fill rows whose width is bounded by ``sqrt(total_area) * 1.4``. Each row's
+    height equals its largest circle's diameter. O(N), no overlap search.
+    Returns centers in input order.
     """
     n = len(radii)
     if n == 0:
         return []
 
-    order = sorted(range(n), key=lambda i: -radii[i])
+    indexed = sorted(enumerate(radii), key=lambda x: -x[1])
+    total_area = sum(math.pi * r * r for _, r in indexed)
+    target_w = math.sqrt(total_area) * 1.4
+
+    rows = [[]]
+    row_widths = [0.0]
+    row_heights = [0.0]
+    pad = 0.15
+
+    for idx, r in indexed:
+        diam = 2.0 * r + pad
+        if row_widths[-1] > 0 and row_widths[-1] + diam > target_w:
+            rows.append([])
+            row_widths.append(0.0)
+            row_heights.append(0.0)
+        rows[-1].append((idx, r))
+        row_widths[-1] += diam
+        row_heights[-1] = max(row_heights[-1], 2.0 * r + pad)
+
     centers = [None] * n
-
-    placed_x = [0.0]
-    placed_y = [0.0]
-    placed_r = [radii[order[0]]]
-    centers[order[0]] = (0.0, 0.0)
-
-    for idx in order[1:]:
-        r = radii[idx]
-        px = np.asarray(placed_x)
-        py = np.asarray(placed_y)
-        pr = np.asarray(placed_r)
-        min_d2 = (pr + r) ** 2
-
-        step = max(min(pr.min(), r) * 0.4, 0.2)
-        chosen = None
-        d = 0.0
-        for _ in range(2000):
-            if d == 0.0:
-                angles = np.array([0.0])
-            else:
-                n_angles = max(16, int(2 * math.pi * d / step))
-                angles = np.linspace(0.0, 2 * math.pi, n_angles, endpoint=False)
-            xs = d * np.cos(angles)
-            ys = d * np.sin(angles)
-            dx = xs[:, None] - px[None, :]
-            dy = ys[:, None] - py[None, :]
-            ok = np.all(dx * dx + dy * dy >= min_d2[None, :] - 1e-9, axis=1)
-            valid = np.flatnonzero(ok)
-            if valid.size:
-                k = int(valid[0])
-                chosen = (float(xs[k]), float(ys[k]))
-                break
-            d += step
-
-        if chosen is None:
-            chosen = (d, 0.0)
-        centers[idx] = chosen
-        placed_x.append(chosen[0])
-        placed_y.append(chosen[1])
-        placed_r.append(r)
+    y_cursor = 0.0
+    for row, row_h in zip(rows, row_heights):
+        x_cursor = 0.0
+        for idx, r in row:
+            centers[idx] = (x_cursor + r, y_cursor - row_h / 2.0)
+            x_cursor += 2.0 * r + pad
+        y_cursor -= row_h
 
     return centers
 
@@ -317,11 +303,13 @@ def main(argv=None):
     total_clusters = len(final_blocks)
     total_records = sum(len(ids) for ids in final_blocks.values())
 
+    print(f"Building layout for {len(final_blocks)} clusters "
+          f"(min_cluster_size={args.min_cluster_size})...", flush=True)
     clusters, points = build_layout(
         cleaned, final_blocks, args.min_cluster_size
     )
-    print(f"Visualizing {len(clusters)} clusters, {len(points)} records "
-          f"(min cluster size = {args.min_cluster_size})")
+    print(f"Visualizing {len(clusters)} clusters, {len(points)} records",
+          flush=True)
 
     render(clusters, points,
            total_clusters=total_clusters,
