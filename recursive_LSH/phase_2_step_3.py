@@ -1,48 +1,57 @@
 """
-Phase 2: Blocking Based on Merging Tokens
+Phase 2 - Step 3: Generate Candidate Pairs
 
-Three sub-steps, each in its own file and runnable individually:
+Enumerate all within-block record pairs across the initial blocks. This
+is the list of pairs the downstream entity-resolution comparison stage
+would need to evaluate in detail.
 
-  1. phase_2_step_1.py - per-key buckets (inverted index)
-  2. phase_2_step_2.py - initial blocks (exact / LSH)
-  3. phase_2_step_3.py - candidate pairs
+Run as a script to see candidate-pair statistics:
 
-This module orchestrates all three. ``run_phase_2`` is consumed by
-``recursive_lsh.run_pipeline``. Run this module directly to execute
-the whole phase end-to-end:
-
-    python phase_2.py [input.csv]
+    python phase_2_step_3.py [input.csv]
 """
 
 import argparse
 import os
 import sys
+from itertools import combinations
+from math import comb
 
 import build_refDict
 from phase_0 import run_phase_0
 from phase_1 import run_phase_1
-from phase_2_step_1 import blocks_by_individual_key
 from phase_2_step_2 import form_initial_blocks
-from phase_2_step_3 import candidate_pairs_from_blocks
 
 
-def run_phase_2(hash_key_records, use_lsh=False, num_perm=128,
-                lsh_threshold=0.5):
-    """Execute Phase 2 end-to-end."""
-    by_key = blocks_by_individual_key(hash_key_records)
-    blocks_by_key_set, mode = form_initial_blocks(
-        hash_key_records,
-        use_lsh=use_lsh,
-        num_perm=num_perm,
-        lsh_threshold=lsh_threshold,
-    )
-    candidate_pairs = candidate_pairs_from_blocks(blocks_by_key_set)
+def candidate_pairs_from_blocks(blocks):
+    """All within-block pairs across the supplied blocks."""
+    pairs = set()
+    for refIDs in blocks.values():
+        if len(refIDs) < 2:
+            continue
+        for a, b in combinations(sorted(refIDs), 2):
+            pairs.add((a, b))
+    return sorted(pairs)
 
-    print(f"[Phase 2] {len(by_key)} per-key buckets, "
-          f"{len(blocks_by_key_set)} initial blocks ({mode}), "
-          f"{len(candidate_pairs)} candidate pairs")
 
-    return by_key, blocks_by_key_set, candidate_pairs
+def _print_summary(pairs, blocks, n_records, sample_n=10):
+    print("\n=== Phase 2 - Step 3: Candidate Pairs ===")
+    print(f"Candidate pairs: {len(pairs)}")
+    brute = comb(n_records, 2)
+    if brute:
+        ratio = 100 * (1 - len(pairs) / brute)
+        print(f"Brute-force pairs: {brute} (C(N,2) for N={n_records})")
+        print(f"Reduction:         {ratio:.4f}%")
+
+    multi_blocks = [b for b in blocks.values() if len(b) >= 2]
+    if multi_blocks:
+        avg_per_block = len(pairs) / len(multi_blocks)
+        print(f"Multi-record blocks:    {len(multi_blocks)}")
+        print(f"Avg pairs per block:    {avg_per_block:.2f}")
+
+    if pairs:
+        print(f"\nFirst {sample_n} candidate pairs:")
+        for a, b in pairs[:sample_n]:
+            print(f"  ({a}, {b})")
 
 
 def _parse_args(argv=None):
@@ -50,7 +59,7 @@ def _parse_args(argv=None):
     default_input = os.path.join(here, "S12PX.txt")
 
     parser = argparse.ArgumentParser(
-        description="Run all three Phase 2 sub-steps end-to-end."
+        description="Phase 2 - Step 3: enumerate candidate pairs."
     )
     parser.add_argument("input", nargs="?", default=default_input)
     parser.add_argument("--delimiter", default=",")
@@ -63,6 +72,7 @@ def _parse_args(argv=None):
     parser.add_argument("--use-lsh", action="store_true")
     parser.add_argument("--num-perm", type=int, default=128)
     parser.add_argument("--lsh-threshold", type=float, default=0.5)
+    parser.add_argument("--sample-n", type=int, default=10)
     return parser.parse_args(argv)
 
 
@@ -83,16 +93,17 @@ def main(argv=None):
     )
     _, _, hash_key_records = run_phase_1(cleaned, variations)
 
-    by_key, blocks, pairs = run_phase_2(
+    blocks, mode = form_initial_blocks(
         hash_key_records,
         use_lsh=args.use_lsh,
         num_perm=args.num_perm,
         lsh_threshold=args.lsh_threshold,
     )
-    print(f"\nPhase 2 complete:")
-    print(f"  per-key buckets:  {len(by_key)}")
-    print(f"  initial blocks:   {len(blocks)}")
-    print(f"  candidate pairs:  {len(pairs)}")
+    print(f"Initial blocks: {len(blocks)} (mode={mode})")
+
+    pairs = candidate_pairs_from_blocks(blocks)
+    _print_summary(pairs, blocks, n_records=len(refDict),
+                   sample_n=args.sample_n)
     return 0
 
 
