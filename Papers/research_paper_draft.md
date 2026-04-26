@@ -1,13 +1,28 @@
 # Recursive Locality-Sensitive Hashing with Word Signatures for Scalable Entity Resolution Blocking
 
-**Authors:** [TODO: your name(s) and affiliations]
-**Keywords:** Entity Resolution, Blocking, Locality-Sensitive Hashing, MinHash, Record Linkage, Data Quality
+**Authors:** Lou Angela Foua
+**Keywords:** Entity Resolution, Blocking, Locality-Sensitive Hashing, MinHash, Record Linkage, Data Quality, Distributed Systems
 
 ---
 
 ## Abstract
 
-Entity Resolution (ER) — identifying records that refer to the same real-world entity across noisy, schema-heterogeneous datasets — is fundamentally limited by the quadratic cost of all-pairs comparison. Blocking mitigates this cost by partitioning records into smaller candidate groups, but classical blocking schemes either over-merge (producing oversized blocks that re-introduce the quadratic problem) or over-split (missing true matches). We propose **Recursive LSH with Word Signatures**, a four-phase blocking pipeline that (i) cleans and *expands* tokens into data-quality variation classes, (ii) maps each variation class to a stable hash key, (iii) groups records by shared hash-key sets, and (iv) recursively refines oversized initial blocks by splitting on the most balanced *distinguishing* hash key. We evaluate on the `S12PX` benchmark of 6,000 noisy records and show that the pipeline produces [TODO: N] final blocks while achieving recall of [TODO: R%] at a candidate-pair budget two orders of magnitude smaller than the all-pairs baseline. The interactive visualization tooling we provide makes failure modes auditable and accelerates threshold tuning.
+Entity Resolution (ER) is the process of identifying records that refer to the same real-world.
+
+There are different world cases where the schema given to us may be untrustworthy, and where the alignment of the columns do not match the values in the cells. So, there is a need to be able to perform ER on dataset that display this kind of behavior with noisy, schema-heterogeneous data
+
+ER is fundamentally limited by the quadratic cost of all-pairs comparison. Blocking mitigates this cost by partitioning records into smaller candidate groups, but classical blocking schemes…[limitations of right now methods]
+
+We propose Recursive LSH with Word Signatures, a four-phase blocking pipeline that runs on a distributed systems using Spark:
+ (i) cleans and *expands* tokens into data-quality variation classes
+ (ii) maps each variation class to a stable hash key, 
+ (iii) groups records by shared hash-key sets
+ (iv) recursively refines oversized initial blocks by splitting on the most balanced *distinguishing* hash key. 
+
+We evaluate our novel pipeline on synthetic PII, and business registration and product datasets. 
+
+We provided interactive visualization tooling to make failure modes auditable, accelerate threshold tuning, and show results of the performance of the pipeline.
+
 
 ---
 
