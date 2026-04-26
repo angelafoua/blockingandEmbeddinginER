@@ -16,9 +16,38 @@ import argparse
 import json
 import os
 import sys
+import urllib.error
+import urllib.request
 
 import build_refDict
 from recursive_lsh import run_pipeline
+
+
+D3_URL = "https://d3js.org/d3.v7.min.js"
+_HERE = os.path.dirname(os.path.abspath(__file__))
+D3_CACHE = os.path.join(_HERE, "_d3.v7.min.js")
+
+
+def _load_d3_script_tag():
+    """Return a <script> tag with D3 inlined, fetching it on first use.
+
+    Falls back to the CDN <script src=...> tag if both the cache and the
+    network fetch are unavailable. Inlining matters for environments where
+    the browser can't reach the CDN (Codespaces port-forward CSP, offline
+    file:// usage, restricted networks).
+    """
+    if not os.path.isfile(D3_CACHE) or os.path.getsize(D3_CACHE) < 100_000:
+        try:
+            print(f"Fetching D3.js from {D3_URL} (one-time, cached locally)...")
+            urllib.request.urlretrieve(D3_URL, D3_CACHE)
+        except (urllib.error.URLError, OSError) as e:
+            print(f"Could not fetch D3 ({e}); HTML will load it from the CDN.")
+            return f'<script src="{D3_URL}"></script>'
+    try:
+        with open(D3_CACHE, "r", encoding="utf-8") as f:
+            return f"<script>\n{f.read()}\n</script>"
+    except OSError:
+        return f'<script src="{D3_URL}"></script>'
 
 
 HTML_TEMPLATE = r"""<!DOCTYPE html>
@@ -26,7 +55,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <title>Recursive LSH Clusters</title>
-<script src="https://d3js.org/d3.v7.min.js"></script>
+__D3_SCRIPT__
 <style>
   * { box-sizing: border-box; }
   body {
@@ -108,6 +137,16 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </div>
 
 <script>
+if (typeof d3 === "undefined") {
+  document.querySelector("#viz").innerHTML =
+    '<p style="color:#fca5a5; padding:24px; font-family:monospace;">' +
+    'D3.js failed to load.<br>' +
+    'If you are viewing this file via a Codespaces port-forward or another ' +
+    'environment that blocks external scripts, regenerate the HTML with ' +
+    'an inlined D3 (visualize.py fetches it automatically when it has internet).' +
+    '</p>';
+  throw new Error("D3.js not loaded");
+}
 const DATA = __DATA_JSON__;
 const records = DATA.records;
 const clusters = DATA.clusters;
@@ -267,7 +306,8 @@ def build_visualization(refDict, final_blocks, output_html):
     payload = json.dumps({"records": records, "clusters": clusters},
                          ensure_ascii=False)
 
-    html = HTML_TEMPLATE.replace("__DATA_JSON__", payload)
+    html = HTML_TEMPLATE.replace("__D3_SCRIPT__", _load_d3_script_tag())
+    html = html.replace("__DATA_JSON__", payload)
     with open(output_html, "w", encoding="utf-8") as f:
         f.write(html)
 
