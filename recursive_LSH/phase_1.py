@@ -1,11 +1,11 @@
 """
-Phase 1: Hashing Keys for Token Variations
+Phase 1: Signature-Based Token Mapping
 
 Three sub-steps, each in its own file and runnable individually:
 
-  1. phase_1_step_1.py - merge variation sets into disjoint groups
-  2. phase_1_step_2.py - assign one hash key per group
-  3. phase_1_step_3.py - convert each record's tokens to its hash-key set
+  1. phase_1_step_1.py - assign signature to each variation set
+  2. phase_1_step_2.py - build token -> signatures reverse map
+  3. phase_1_step_3.py - build record -> flattened signatures
 
 This module orchestrates all three. ``run_phase_1`` is consumed by
 ``recursive_lsh.run_pipeline``. Run this module directly to execute
@@ -20,28 +20,29 @@ import sys
 
 import build_refDict
 from phase_0 import run_phase_0
-from phase_1_step_1 import build_groups
-from phase_1_step_2 import assign_hash_keys
-from phase_1_step_3 import records_to_hash_keys
+from phase_1_step_1 import assign_signatures_to_sets
+from phase_1_step_2 import build_token_to_signatures
+from phase_1_step_3 import build_record_signatures
 
 
-def build_token_hash_mapping(variations_dict, key_prefix="HASH"):
-    """Compose Steps 1 + 2: groups -> (token_hash_mapping, hash_to_tokens)."""
-    groups = build_groups(variations_dict)
-    return assign_hash_keys(groups, key_prefix=key_prefix)
+def run_phase_1(refDict, variations_dict):
+    """
+    Execute Phase 1 end-to-end using the signature-based approach.
 
+    Returns:
+      - token_to_signatures: {token: tuple(signatures it appears in)}
+      - sig_to_tokens: {signature: tuple(tokens in that variation set)}
+      - hash_key_records: {refID: tuple(flattened signatures)}
+    """
+    sig_to_tokens = assign_signatures_to_sets(variations_dict)
+    token_to_signatures = build_token_to_signatures(variations_dict, sig_to_tokens)
+    hash_key_records = build_record_signatures(refDict, token_to_signatures)
 
-def run_phase_1(refDict, variations_dict, key_prefix="HASH"):
-    """Execute Phase 1 end-to-end."""
-    token_hash_mapping, hash_to_tokens = build_token_hash_mapping(
-        variations_dict, key_prefix=key_prefix
-    )
-    hash_key_records = records_to_hash_keys(refDict, token_hash_mapping)
+    total_sigs = len(sig_to_tokens)
+    print(f"[Phase 1] {total_sigs} signatures created from variation sets; "
+          f"{len(token_to_signatures)} tokens mapped")
 
-    print(f"[Phase 1] {len(hash_to_tokens)} hash keys created from "
-          f"{len(token_hash_mapping)} tokens")
-
-    return token_hash_mapping, hash_to_tokens, hash_key_records
+    return token_to_signatures, sig_to_tokens, hash_key_records
 
 
 def _parse_args(argv=None):
@@ -59,7 +60,6 @@ def _parse_args(argv=None):
                         default="fuzzy")
     parser.add_argument("--similarity-threshold", type=int, default=85)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--key-prefix", default="HASH")
     return parser.parse_args(argv)
 
 
@@ -79,12 +79,12 @@ def main(argv=None):
         seed=args.seed,
     )
 
-    token_hash_mapping, hash_to_tokens, hash_key_records = run_phase_1(
-        cleaned, variations, key_prefix=args.key_prefix
+    token_to_sigs, sig_to_tokens, hash_key_records = run_phase_1(
+        cleaned, variations
     )
     print(f"\nPhase 1 complete:")
-    print(f"  hash keys:           {len(hash_to_tokens)}")
-    print(f"  tokens mapped:       {len(token_hash_mapping)}")
+    print(f"  signatures:           {len(sig_to_tokens)}")
+    print(f"  tokens mapped:        {len(token_to_sigs)}")
     print(f"  records fingerprinted: {len(hash_key_records)}")
     return 0
 

@@ -1,15 +1,11 @@
 """
-Phase 1 - Step 2: Assign Hash Keys to Variation Groups
+Phase 1 - Step 2: Build Reverse Map (Token -> Signatures)
 
-For each disjoint group from Step 1, mint one deterministic hash key
-(``HASH_00001``, ``HASH_00002``, ...). Every token in the group is
-mapped to that key, so all variants of one concept share a key.
+For each token that appears as a KEY in variations_dict, find all the
+signatures (from Step 1) that contain it. A token can appear in multiple
+signatures if it's part of multiple variation sets.
 
-Returns:
-  - token_hash_mapping : {token: hash_key}
-  - hash_to_tokens     : {hash_key: set(tokens)}
-
-Run as a script to inspect the mappings:
+Run as a script to inspect token-to-signature mappings:
 
     python phase_1_step_2.py [input.csv] --method fuzzy
 """
@@ -21,59 +17,65 @@ from collections import Counter
 
 import build_refDict
 from phase_0 import run_phase_0
-from phase_1_step_1 import build_groups
+from phase_1_step_1 import assign_signatures_to_sets
 
 
-def assign_hash_keys(groups, key_prefix="HASH"):
-    """Mint a unique hash key per group; return forward + reverse maps."""
-    groups_sorted = sorted(groups, key=lambda g: sorted(g)[0])
+def build_token_to_signatures(variations_dict, sig_to_tokens):
+    """
+    For each token that is a KEY in variations_dict, find all signatures
+    it appears in (across all variation sets). Returns a dict mapping
+    token -> tuple of signatures (sorted for determinism).
+    """
+    # Build reverse map: token -> set of signatures
+    token_to_sigs = {}
 
-    token_hash_mapping = {}
-    hash_to_tokens = {}
+    for sig, tokens in sig_to_tokens.items():
+        for token in tokens:
+            if token not in token_to_sigs:
+                token_to_sigs[token] = set()
+            token_to_sigs[token].add(sig)
 
-    for idx, group in enumerate(groups_sorted, start=1):
-        hash_key = f"{key_prefix}_{idx:05d}"
-        hash_to_tokens[hash_key] = set(group)
-        for token in group:
-            token_hash_mapping[token] = hash_key
+    # Only keep tokens that were KEYS in variations_dict
+    # (these are the actual tokens in the dataset)
+    refined_sigs = {}
+    for token in variations_dict.keys():
+        if token in token_to_sigs:
+            refined_sigs[token] = tuple(sorted(token_to_sigs[token]))
 
-    return token_hash_mapping, hash_to_tokens
+    return refined_sigs
 
 
-def _print_summary(token_hash_mapping, hash_to_tokens, sample_n=10):
-    print("\n=== Phase 1 - Step 2: Token -> Hash Key Mapping ===")
-    print(f"Hash keys minted:  {len(hash_to_tokens)}")
-    print(f"Tokens mapped:     {len(token_hash_mapping)}")
-    if not hash_to_tokens:
+def _print_summary(refined_sigs, sample_n=10):
+    print("\n=== Phase 1 - Step 2: Token -> Signature Mapping ===")
+    print(f"Unique tokens (with signatures): {len(refined_sigs)}")
+    if not refined_sigs:
         return
 
-    sizes = [len(v) for v in hash_to_tokens.values()]
-    singletons = sum(1 for s in sizes if s == 1)
-    multi = sum(1 for s in sizes if s > 1)
-    print(f"Singleton keys (1 token):  {singletons}")
-    print(f"Multi-token keys (>=2):   {multi}")
-    print(f"Max tokens per key:        {max(sizes)}")
+    sig_counts = [len(v) for v in refined_sigs.values()]
+    print(f"Avg signatures per token:   {sum(sig_counts) / len(sig_counts):.2f}")
+    print(f"Max signatures per token:   {max(sig_counts)}")
+    print(f"Min signatures per token:   {min(sig_counts)}")
 
-    bins = Counter(sizes)
-    max_size = max(bins)
-    print("\nTokens-per-key distribution:")
-    for size in sorted(bins):
-        if size <= 10 or size % 5 == 0 or size == max_size:
-            print(f"  size={size:<5} -> {bins[size]} keys")
+    bins = Counter(sig_counts)
+    max_count = max(bins)
+    print("\nSignatures-per-token distribution:")
+    for count in sorted(bins):
+        if count <= 10 or count % 5 == 0 or count == max_count:
+            print(f"  sigs={count:<4} -> {bins[count]} tokens")
 
-    ranked = sorted(hash_to_tokens.items(),
+    ranked = sorted(refined_sigs.items(),
                     key=lambda kv: -len(kv[1]))
-    print(f"\nLargest {sample_n} hash keys (key -> sample tokens):")
-    for hkey, toks in ranked[:sample_n]:
-        if len(toks) <= 1:
+    print(f"\nTokens appearing in most signatures (top {sample_n}):")
+    for token, sigs in ranked[:sample_n]:
+        if len(sigs) <= 1:
             break
-        sample = ", ".join(sorted(toks)[:8])
-        more = f" (+{len(toks) - 8} more)" if len(toks) > 8 else ""
-        print(f"  [{len(toks):>4}]  {hkey}: {sample}{more}")
+        sample = ", ".join(sigs[:6])
+        more = f" (+{len(sigs) - 6} more)" if len(sigs) > 6 else ""
+        print(f"  [{len(sigs):>3} sigs]  {token}: {sample}{more}")
 
-    print(f"\nFirst {sample_n} token -> hash_key entries:")
-    for token, hkey in list(token_hash_mapping.items())[:sample_n]:
-        print(f"  {token!r} -> {hkey}")
+    print(f"\nFirst {sample_n} token -> signatures entries:")
+    for token, sigs in list(refined_sigs.items())[:sample_n]:
+        print(f"  {token!r}: {sigs}")
 
 
 def _parse_args(argv=None):
@@ -81,7 +83,7 @@ def _parse_args(argv=None):
     default_input = os.path.join(here, "S12PX.txt")
 
     parser = argparse.ArgumentParser(
-        description="Phase 1 - Step 2: assign hash keys to variation groups."
+        description="Phase 1 - Step 2: build token -> signatures map."
     )
     parser.add_argument("input", nargs="?", default=default_input)
     parser.add_argument("--delimiter", default=",")
@@ -91,7 +93,6 @@ def _parse_args(argv=None):
                         default="fuzzy")
     parser.add_argument("--similarity-threshold", type=int, default=85)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--key-prefix", default="HASH")
     parser.add_argument("--sample-n", type=int, default=10)
     return parser.parse_args(argv)
 
@@ -112,13 +113,11 @@ def main(argv=None):
         seed=args.seed,
     )
 
-    groups = build_groups(variations)
-    print(f"Step 1 produced {len(groups)} disjoint variation groups")
+    sig_to_tokens = assign_signatures_to_sets(variations)
+    print(f"Step 1 assigned {len(sig_to_tokens)} signatures to variation sets")
 
-    token_hash_mapping, hash_to_tokens = assign_hash_keys(
-        groups, key_prefix=args.key_prefix
-    )
-    _print_summary(token_hash_mapping, hash_to_tokens, sample_n=args.sample_n)
+    refined_sigs = build_token_to_signatures(variations, sig_to_tokens)
+    _print_summary(refined_sigs, sample_n=args.sample_n)
     return 0
 
 
