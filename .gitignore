@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Generated pipeline outputs
+*_results.csv
+*_results.xlsx
+*_clusters.html
+*_pipeline.log
+*_stats.txt
+*_blocks.txt
+*_data.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
