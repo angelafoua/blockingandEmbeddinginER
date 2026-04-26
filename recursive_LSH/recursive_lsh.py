@@ -28,9 +28,10 @@ from phase_3 import run_phase_3
 
 def run_pipeline(refDict,
                  max_frequency=60,
-                 variation_method="fuzzy",
+                 variation_method="data_quality",
                  similarity_threshold=85,
                  manual_map=None,
+                 seed=42,
                  use_lsh=False,
                  num_perm=128,
                  lsh_threshold=0.5,
@@ -46,6 +47,7 @@ def run_pipeline(refDict,
         method=variation_method,
         similarity_threshold=similarity_threshold,
         manual_map=manual_map,
+        seed=seed,
     )
     timing["Phase 0"] = time.time() - t0
 
@@ -159,9 +161,14 @@ def _parse_args(argv=None):
         help="Phase 0: drop tokens whose document frequency exceeds this (default: 6).",
     )
     parser.add_argument(
-        "--variation-method", choices=["fuzzy", "phonetic", "manual"],
-        default="fuzzy",
-        help="Phase 0 variation method (default: fuzzy).",
+        "--variation-method",
+        choices=["data_quality", "fuzzy", "phonetic", "manual"],
+        default="data_quality",
+        help="Phase 0 variation method (default: data_quality).",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=42,
+        help="Random seed for the data_quality variation generator (default: 42).",
     )
     parser.add_argument(
         "--similarity-threshold", type=int, default=85,
@@ -254,6 +261,7 @@ def main(argv=None):
             max_frequency=args.max_frequency,
             variation_method=args.variation_method,
             similarity_threshold=args.similarity_threshold,
+            seed=args.seed,
             use_lsh=args.use_lsh,
             num_perm=args.num_perm,
             lsh_threshold=args.lsh_threshold,

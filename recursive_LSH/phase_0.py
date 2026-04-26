@@ -15,6 +15,9 @@ Outputs:
 
 from collections import Counter
 from time import perf_counter
+import os
+import random
+import sys
 
 
 def count_token_frequencies(refDict):
@@ -128,15 +131,71 @@ def _manual_variations(unique_tokens, manual_map):
     return variations
 
 
-def generate_variations(refDict, method="fuzzy", similarity_threshold=85,
-                        manual_map=None):
+def _data_quality_variations(unique_tokens, seed=42):
+    """
+    Group tokens using ``data_quality_generator``.
+
+    For every token T we generate its plausible corruptions via
+    ``generate_all_variations``. Two tokens are linked only when one of
+    them generates a variation that equals another *actual* token in the
+    dataset (case-insensitive). This keeps grouping discriminative —
+    n-gram fragments / acronyms produced by the generator are ignored
+    unless they happen to coincide with a real token.
+
+    The function seeds ``random`` per token so output is reproducible
+    regardless of token ordering.
+
+    Complexity: O(N · T · L) where T is the number of transforms in the
+    generator (~30) and L is the average token length.
+    """
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+
+    try:
+        from data_quality_generator import generate_all_variations
+    except ImportError as e:
+        raise ImportError(
+            "data_quality_generator.py not found. Expected at "
+            f"{os.path.join(parent_dir, 'data_quality_generator.py')}"
+        ) from e
+
+    lower_to_tokens = {}
+    for t in unique_tokens:
+        lower_to_tokens.setdefault(t.lower(), set()).add(t)
+
+    variations = {t: {t} for t in unique_tokens}
+
+    for t in unique_tokens:
+        random.seed((seed * 1103515245 + hash(t.lower())) & 0xFFFFFFFF)
+        result = generate_all_variations(t.lower())
+        generated = result.get(t.lower(), set())
+
+        for variant in generated:
+            if not variant or variant == t.lower():
+                continue
+            matched = lower_to_tokens.get(variant)
+            if not matched:
+                continue
+            for other in matched:
+                if other != t:
+                    variations[t].add(other)
+                    variations[other].add(t)
+
+    return variations
+
+
+def generate_variations(refDict, method="data_quality", similarity_threshold=85,
+                        manual_map=None, seed=42):
     """
     Build {token: set(variations)} for every unique token in ``refDict``.
 
-    method ∈ {'fuzzy', 'phonetic', 'manual'}
+    method ∈ {'data_quality', 'fuzzy', 'phonetic', 'manual'}
     """
     unique_tokens = {t for tokens in refDict.values() for t in tokens}
 
+    if method == "data_quality":
+        return _data_quality_variations(unique_tokens, seed=seed)
     if method == "fuzzy":
         return _fuzzy_variations(unique_tokens, similarity_threshold)
     if method == "phonetic":
@@ -147,8 +206,8 @@ def generate_variations(refDict, method="fuzzy", similarity_threshold=85,
     raise ValueError(f"Unknown variation method: {method}")
 
 
-def run_phase_0(refDict, max_frequency=60, method="fuzzy",
-                similarity_threshold=85, manual_map=None):
+def run_phase_0(refDict, max_frequency=60, method="data_quality",
+                similarity_threshold=85, manual_map=None, seed=42):
     """Execute Phase 0 end-to-end."""
     t0 = perf_counter()
     tokenFreqDict = count_token_frequencies(refDict)
@@ -166,6 +225,7 @@ def run_phase_0(refDict, max_frequency=60, method="fuzzy",
         method=method,
         similarity_threshold=similarity_threshold,
         manual_map=manual_map,
+        seed=seed,
     )
     t_var = perf_counter() - t0
 
