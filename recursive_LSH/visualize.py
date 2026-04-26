@@ -286,7 +286,8 @@ def _parse_args(argv=None):
     parser.add_argument("--delimiter", default=",")
     parser.add_argument("--max-frequency", type=int, default=6)
     parser.add_argument("--variation-method",
-                        choices=["fuzzy", "phonetic", "manual"], default="fuzzy")
+                        choices=["fuzzy", "phonetic", "manual", "data_quality"],
+                        default="fuzzy")
     parser.add_argument("--similarity-threshold", type=int, default=85)
     parser.add_argument("--max-depth", type=int, default=3)
     parser.add_argument("--min-bucket-size", type=int, default=2)
