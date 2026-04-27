@@ -1,11 +1,11 @@
 """
-Phase 1 - Step 3: Convert Records to Hash-Key Sets
+Phase 1 - Step 3: Build Record Signatures
 
-Translate every record's tokens into the sorted tuple of hash keys
-they map to (using ``token_hash_mapping`` from Step 2). This produces
-the per-record "fingerprint" that Phase 2 uses for blocking.
+For each record, look up the signatures of each token (from Step 2),
+and flatten them into a single sorted tuple. This is the record's
+signature fingerprint for blocking.
 
-Run as a script to inspect record fingerprints:
+Run as a script to inspect record signatures:
 
     python phase_1_step_3.py [input.csv] --method fuzzy
 """
@@ -17,47 +17,57 @@ from collections import Counter
 
 import build_refDict
 from phase_0 import run_phase_0
-from phase_1_step_1 import build_groups
-from phase_1_step_2 import assign_hash_keys
+from phase_1_step_1 import assign_signatures_to_sets
+from phase_1_step_2 import build_token_to_signatures
 
 
-def records_to_hash_keys(refDict, token_hash_mapping):
-    """Convert each record's tokens into a sorted tuple of hash keys."""
+def build_record_signatures(refDict, refined_sigs):
+    """
+    For each record, look up its tokens' signatures and flatten into a
+    single sorted tuple. Tokens not in refined_sigs are skipped.
+
+    Returns: {refID: tuple(sorted signatures)}
+    """
     hash_key_records = {}
     for refID, tokens in refDict.items():
-        keys = {token_hash_mapping[t] for t in tokens if t in token_hash_mapping}
-        hash_key_records[refID] = tuple(sorted(keys))
+        # Collect all signatures from all tokens
+        all_sigs = set()
+        for token in tokens:
+            if token in refined_sigs:
+                all_sigs.update(refined_sigs[token])
+        # Store as sorted tuple for determinism
+        hash_key_records[refID] = tuple(sorted(all_sigs))
     return hash_key_records
 
 
 def _print_summary(hash_key_records, sample_n=10):
-    print("\n=== Phase 1 - Step 3: Record -> Hash-Key Sets ===")
+    print("\n=== Phase 1 - Step 3: Record Signatures ===")
     print(f"Records: {len(hash_key_records)}")
     if not hash_key_records:
         return
 
-    sizes = [len(v) for v in hash_key_records.values()]
-    empty = sum(1 for s in sizes if s == 0)
-    print(f"Records with zero hash keys:   {empty}")
-    print(f"Records with >=1 hash key:    {len(hash_key_records) - empty}")
-    if any(sizes):
-        non_empty = [s for s in sizes if s > 0]
-        print(f"Avg keys / record (non-empty): {sum(non_empty) / len(non_empty):.2f}")
-        print(f"Max keys in a record:          {max(sizes)}")
+    sig_counts = [len(v) for v in hash_key_records.values()]
+    empty = sum(1 for s in sig_counts if s == 0)
+    print(f"Records with zero signatures:   {empty}")
+    print(f"Records with >=1 signature:    {len(hash_key_records) - empty}")
+    if any(sig_counts):
+        non_empty = [s for s in sig_counts if s > 0]
+        print(f"Avg signatures / record (non-empty): {sum(non_empty) / len(non_empty):.2f}")
+        print(f"Max signatures in a record:          {max(sig_counts)}")
 
-    bins = Counter(sizes)
-    max_size = max(bins)
-    print("\nKeys-per-record distribution:")
-    for size in sorted(bins):
-        if size <= 15 or size % 5 == 0 or size == max_size:
-            print(f"  keys={size:<4} -> {bins[size]} records")
+    bins = Counter(sig_counts)
+    max_count = max(bins)
+    print("\nSignatures-per-record distribution:")
+    for count in sorted(bins):
+        if count <= 15 or count % 5 == 0 or count == max_count:
+            print(f"  sigs={count:<4} -> {bins[count]} records")
 
-    print(f"\nFirst {sample_n} records (refID -> hash keys):")
-    for refID, keys in list(hash_key_records.items())[:sample_n]:
-        if len(keys) > 8:
-            shown = ", ".join(keys[:8]) + f" (+{len(keys) - 8} more)"
+    print(f"\nFirst {sample_n} records (refID -> signatures):")
+    for refID, sigs in list(hash_key_records.items())[:sample_n]:
+        if len(sigs) > 8:
+            shown = ", ".join(sigs[:8]) + f" (+{len(sigs) - 8} more)"
         else:
-            shown = ", ".join(keys) if keys else "(no keys)"
+            shown = ", ".join(sigs) if sigs else "(no signatures)"
         print(f"  {refID}: {shown}")
 
 
@@ -66,7 +76,7 @@ def _parse_args(argv=None):
     default_input = os.path.join(here, "S12PX.txt")
 
     parser = argparse.ArgumentParser(
-        description="Phase 1 - Step 3: convert records to hash-key sets."
+        description="Phase 1 - Step 3: build record signatures."
     )
     parser.add_argument("input", nargs="?", default=default_input)
     parser.add_argument("--delimiter", default=",")
@@ -76,7 +86,6 @@ def _parse_args(argv=None):
                         default="fuzzy")
     parser.add_argument("--similarity-threshold", type=int, default=85)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--key-prefix", default="HASH")
     parser.add_argument("--sample-n", type=int, default=10)
     return parser.parse_args(argv)
 
@@ -97,12 +106,13 @@ def main(argv=None):
         seed=args.seed,
     )
 
-    groups = build_groups(variations)
-    token_hash_mapping, _ = assign_hash_keys(groups, key_prefix=args.key_prefix)
-    print(f"Step 2 minted {len(set(token_hash_mapping.values()))} hash keys "
-          f"covering {len(token_hash_mapping)} tokens")
+    sig_to_tokens = assign_signatures_to_sets(variations)
+    print(f"Step 1 assigned {len(sig_to_tokens)} signatures")
 
-    hash_key_records = records_to_hash_keys(cleaned, token_hash_mapping)
+    refined_sigs = build_token_to_signatures(variations, sig_to_tokens)
+    print(f"Step 2 mapped {len(refined_sigs)} tokens to their signatures")
+
+    hash_key_records = build_record_signatures(cleaned, refined_sigs)
     _print_summary(hash_key_records, sample_n=args.sample_n)
     return 0
 

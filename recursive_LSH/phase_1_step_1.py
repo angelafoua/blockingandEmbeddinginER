@@ -1,13 +1,10 @@
 """
-Phase 1 - Step 1: Merge Variation Sets into Disjoint Groups
+Phase 1 - Step 1: Assign Signature to Each Variation Set
 
-Phase 0's ``variations_dict`` maps each token to a set of variants, but
-those sets can overlap (e.g. A's variants include B, B's variants include
-C). Step 1 uses union-find to merge any sets that share at least one
-token, producing a list of disjoint groups. Every token in a group will
-later receive the same hash key.
+For each token that is a KEY in variations_dict, compute a deterministic
+signature for its variation set. Each variation set gets exactly one signature.
 
-Run as a script to inspect the resulting groups:
+Run as a script to inspect the signature assignments:
 
     python phase_1_step_1.py [input.csv] --method fuzzy
 """
@@ -21,70 +18,57 @@ import build_refDict
 from phase_0 import run_phase_0
 
 
-def build_groups(variations_dict):
+def assign_signatures_to_sets(variations_dict, sig_prefix="VSIG"):
     """
-    Merge variation sets that share at least one token (union-find).
-    Returns a list of disjoint groups (sets of tokens).
+    For each key (token) in variations_dict, assign a signature to its
+    variation set. Returns signature -> frozenset of tokens in that set.
+
+    Note: Multiple keys may map to the same variation set (if their sets
+    are identical), so we use frozenset to deduplicate.
     """
-    parent = {}
+    set_to_sig = {}
+    sig_to_tokens = {}
+    sig_counter = 1
 
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
+    for token, variant_set in variations_dict.items():
+        # The variation set includes the token itself
+        variation_set = frozenset(variant_set | {token})
 
-    def union(a, b):
-        ra, rb = find(a), find(b)
-        if ra != rb:
-            parent[rb] = ra
+        # If we've seen this exact set before, reuse its signature
+        if variation_set not in set_to_sig:
+            sig = f"{sig_prefix}_{sig_counter:05d}"
+            set_to_sig[variation_set] = sig
+            sig_to_tokens[sig] = tuple(sorted(variation_set))
+            sig_counter += 1
 
-    for token, variants in variations_dict.items():
-        for v in variants | {token}:
-            parent.setdefault(v, v)
-        canonical = token
-        for v in variants:
-            union(canonical, v)
-
-    groups = {}
-    for token in parent:
-        root = find(token)
-        groups.setdefault(root, set()).add(token)
-
-    return list(groups.values())
+    return sig_to_tokens
 
 
-def _print_summary(groups, sample_n=10):
-    print("\n=== Phase 1 - Step 1: Disjoint Variation Groups ===")
-    print(f"Groups: {len(groups)}")
-    if not groups:
+def _print_summary(sig_to_tokens, sample_n=10):
+    print("\n=== Phase 1 - Step 1: Variation Set Signatures ===")
+    print(f"Unique variation sets: {len(sig_to_tokens)}")
+    if not sig_to_tokens:
         return
 
-    sizes = [len(g) for g in groups]
-    singletons = sum(1 for s in sizes if s == 1)
-    multi = sum(1 for s in sizes if s > 1)
-    print(f"Singleton groups (1 token):  {singletons}")
-    print(f"Multi-token groups (>=2):   {multi}")
-    print(f"Max group size:              {max(sizes)}")
-    if multi:
-        avg_multi = sum(s for s in sizes if s > 1) / multi
-        print(f"Avg size (multi-token):     {avg_multi:.2f}")
+    sizes = [len(v) for v in sig_to_tokens.values()]
+    print(f"Avg tokens per set:    {sum(sizes) / len(sizes):.2f}")
+    print(f"Max tokens in a set:   {max(sizes)}")
+    print(f"Min tokens in a set:   {min(sizes)}")
 
     bins = Counter(sizes)
     max_size = max(bins)
-    print("\nGroup-size distribution (size -> # groups):")
+    print("\nTokens-per-set distribution:")
     for size in sorted(bins):
         if size <= 10 or size % 5 == 0 or size == max_size:
-            print(f"  size={size:<5} -> {bins[size]} groups")
+            print(f"  size={size:<4} -> {bins[size]} sets")
 
-    ranked = sorted(groups, key=lambda g: -len(g))
-    print(f"\nLargest {sample_n} groups (size -> sample tokens):")
-    for group in ranked[:sample_n]:
-        if len(group) <= 1:
-            break
-        sample = ", ".join(sorted(group)[:8])
-        more = f" (+{len(group) - 8} more)" if len(group) > 8 else ""
-        print(f"  [{len(group):>4}]  {sample}{more}")
+    ranked = sorted(sig_to_tokens.items(),
+                    key=lambda kv: -len(kv[1]))
+    print(f"\nLargest {sample_n} variation sets (sig -> sample tokens):")
+    for sig, toks in ranked[:sample_n]:
+        sample = ", ".join(toks[:8])
+        more = f" (+{len(toks) - 8} more)" if len(toks) > 8 else ""
+        print(f"  [{len(toks):>4}]  {sig}: {sample}{more}")
 
 
 def _parse_args(argv=None):
@@ -92,7 +76,7 @@ def _parse_args(argv=None):
     default_input = os.path.join(here, "S12PX.txt")
 
     parser = argparse.ArgumentParser(
-        description="Phase 1 - Step 1: build disjoint variation groups."
+        description="Phase 1 - Step 1: assign signatures to variation sets."
     )
     parser.add_argument("input", nargs="?", default=default_input)
     parser.add_argument("--delimiter", default=",")
@@ -122,8 +106,8 @@ def main(argv=None):
         seed=args.seed,
     )
 
-    groups = build_groups(variations)
-    _print_summary(groups, sample_n=args.sample_n)
+    sig_to_tokens = assign_signatures_to_sets(variations)
+    _print_summary(sig_to_tokens, sample_n=args.sample_n)
     return 0
 
 
