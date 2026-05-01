@@ -87,7 +87,7 @@ def deduplicate_blocks(blocks):
 
 
 # ------------------------------------------------------------
-# Step 4: Merge blocks that share ≥1 refID
+# Step 4: Merge blocks that share >=1 refID
 # ------------------------------------------------------------
 def merge_by_key_overlap(blocks):
     keys = list(blocks.keys())
@@ -179,14 +179,21 @@ def iterative_blocking(ref_dict):
     return current_blocks
 
 if __name__ == "__main__":
+    import sys
+    import os
+    # Allow importing global_correction.py from the repository root
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+    import global_correction
 
-    #refDict = load_dict(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\refDict")
     refDict = build_refDict.tokenizeInput(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt")
-    #tokenFreqDict = load_dict(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\tokenFreqDict")
-  
+
+    # --- Global correction (DWM25) before blocking ---
+    # Pass word_list_path="DWM_WordList.txt" if you have the word list file.
+    tokenFreqDict = dict(compute_token_freq(refDict))
+    refDict = global_correction.global_replace(refDict, tokenFreqDict)
+    # -------------------------------------------------
+
     result = iterative_blocking(refDict)
 
     print("\nFinal Blocks:", result)
     print('\nnumber of blocks:', len(result))
-    #for k, v in result.items():
-        #print(k, v)

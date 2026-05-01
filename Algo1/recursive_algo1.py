@@ -1,4 +1,4 @@
-""""Here I am doing recursive blocking, which means I will do blocking based on 1 token, 
+"""Here I am doing recursive blocking, which means I will do blocking based on 1 token, 
 then I will do blocking based on 2 tokens, then 3 tokens, and so on and so forth until I reach the beta threshold.
 When I create blocks based on 1 token, I will create blocks based on 2 tokens whithin the blocks created based on 1 token, then I will create blocks based on 3 tokens within the blocks created based on 2 tokens,
 and so on and so forth until I reach the beta threshold.
@@ -44,11 +44,21 @@ def blocking(beta, refDict, tokenFreqDict):
 
 
 if __name__ == "__main__":
-     #read files
-    #refDict = load_dict(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\refDict")
+    import sys
+    import os
+    # Allow importing global_correction.py from the repository root
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+    import global_correction
+
     refDict = build_refDict.tokenizeInput(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt")
-    #tokenFreqDict = load_dict(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\tokenFreqDict")
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
+
+    # --- Global correction (DWM25) before blocking ---
+    # Pass word_list_path="DWM_WordList.txt" if you have the word list file.
+    refDict = global_correction.global_replace(refDict, tokenFreqDict)
+    tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)  # rebuild after correction
+    # -------------------------------------------------
+
     initial_blocks = blocking(4, refDict, tokenFreqDict)
     final_blocks = recursive_blocking(4, initial_blocks)
     print(final_blocks)
