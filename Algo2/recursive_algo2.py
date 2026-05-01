@@ -114,15 +114,24 @@ def iterative_blocking(initial_blocks):
 # MAIN
 # --------------------------------------------
 if __name__ == "__main__":
+    import sys
+    import os
+    # Allow importing global_correction.py from the repository root
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+    import global_correction
 
     refDict = build_refDict.tokenizeInput(
         r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt"
     )
-
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
 
-    initial_blocks = blocking(4, refDict, tokenFreqDict)
+    # --- Global correction (DWM25) before blocking ---
+    # Pass word_list_path="DWM_WordList.txt" if you have the word list file.
+    refDict = global_correction.global_replace(refDict, tokenFreqDict)
+    tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)  # rebuild after correction
+    # -------------------------------------------------
 
+    initial_blocks = blocking(4, refDict, tokenFreqDict)
     final_blocks = iterative_blocking(initial_blocks)
 
     print(final_blocks)

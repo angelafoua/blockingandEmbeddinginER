@@ -82,6 +82,16 @@ class BlockerConfig:
     # ---- Optional similarity scoring ------------------------------------
     score_jaccard: bool = False
 
+    # ---- Global token correction (DWM25-style) --------------------------
+    # When True, applies global_replace() after tokenization and before
+    # q-gram / MinHash computation.  Corrects low-frequency tokens that are
+    # within edit-distance 1 of a high-frequency token.
+    run_global_correction: bool = False
+    gc_word_list_path: Optional[str] = None   # path to DWM_WordList.txt (optional)
+    gc_min_freq_std: int = 10    # min frequency to be a standard (correct) token
+    gc_min_len_std: int = 3      # min token length to be a standard token
+    gc_max_freq_err: int = 3     # max frequency to be an error-token candidate
+
     # ---- Output ----------------------------------------------------------
     output_csv: Optional[str] = None
     print_report: bool = True

@@ -6,14 +6,20 @@ Examples
 Generate a synthetic dataset and run blocking:
 
     python -m recursive_minhash_blocker.main --generate-sample sample.csv --rows 500
-    python -m recursive_minhash_blocker.main --input sample.csv \
-        --columns Name Address --alpha 2 --beta 200 --q 2 --num_perm 64 \
+    python -m recursive_minhash_blocker.main --input sample.csv \\
+        --columns Name Address --alpha 2 --beta 200 --q 2 --num_perm 64 \\
         --max_depth 4 --min_block_size 2 --output blocks.csv
 
 Run on your own CSV:
 
-    python -m recursive_minhash_blocker.main --input mydata.csv \
+    python -m recursive_minhash_blocker.main --input mydata.csv \\
         --columns Name Address --score-jaccard
+
+Enable global token correction before blocking (DWM25-style):
+
+    python -m recursive_minhash_blocker.main --input mydata.csv \\
+        --columns Name Address --global-correction \\
+        --gc-min-freq-std 10 --gc-min-len-std 3 --gc-max-freq-err 3
 """
 
 from __future__ import annotations
@@ -49,7 +55,7 @@ _CITIES = ["Springfield", "Riverside", "Franklin", "Greenville", "Bristol"]
 
 
 def _maybe_typo(s: str, rng: random.Random, p: float = 0.15) -> str:
-    """Inject a single-character typo with probability p — simulates dirty data."""
+    """Inject a single-character typo with probability p - simulates dirty data."""
     if len(s) < 3 or rng.random() > p:
         return s
     i = rng.randrange(len(s))
@@ -169,6 +175,17 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--rows", type=int, default=500,
                    help="Number of rows for --generate-sample.")
     p.add_argument("--seed", type=int, default=0, help="Sample-generator seed.")
+    # Global correction (DWM25-style)
+    p.add_argument("--global-correction", action="store_true",
+                   help="Apply DWM25 global token correction before blocking.")
+    p.add_argument("--gc-word-list", type=str, default=None,
+                   help="Path to DWM_WordList.txt for the global correction step.")
+    p.add_argument("--gc-min-freq-std", type=int, default=10,
+                   help="Min token frequency to be treated as a standard form (default: 10).")
+    p.add_argument("--gc-min-len-std", type=int, default=3,
+                   help="Min token length to be treated as a standard form (default: 3).")
+    p.add_argument("--gc-max-freq-err", type=int, default=3,
+                   help="Max token frequency to be a correction candidate (default: 3).")
     return p
 
 
@@ -211,6 +228,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         output_csv=args.output,
         print_report=not args.no_report,
         log_level=args.log_level,
+        run_global_correction=args.global_correction,
+        gc_word_list_path=args.gc_word_list,
+        gc_min_freq_std=args.gc_min_freq_std,
+        gc_min_len_std=args.gc_min_len_std,
+        gc_max_freq_err=args.gc_max_freq_err,
     )
 
     blocker = RecursiveMinHashBlocker(cfg)

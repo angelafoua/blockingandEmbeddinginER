@@ -112,6 +112,22 @@ class RecursiveMinHashBlocker:
             self._df.loc[idx, cfg.id_column]: toks for idx, toks in rec_to_tokens.items()
         }
 
+        # ---- Step 3b: global token correction (DWM25-style, optional) ----
+        if cfg.run_global_correction:
+            from .global_correction import global_replace
+            token_freq = dict(
+                Counter(t for toks in rec_to_tokens.values() for t in toks)
+            )
+            rec_to_tokens = global_replace(
+                rec_to_tokens,
+                token_freq,
+                word_list_path=cfg.gc_word_list_path,
+                min_freq_std_token=cfg.gc_min_freq_std,
+                min_len_std_token=cfg.gc_min_len_std,
+                max_freq_err_token=cfg.gc_max_freq_err,
+            )
+            logger.info("Global token correction applied.")
+
         # ---- Step 4: q-grams + MinHash, but only once per *unique* token ----
         all_tokens: Set[str] = set()
         for toks in rec_to_tokens.values():
@@ -171,7 +187,7 @@ class RecursiveMinHashBlocker:
     def _compute_stop_signatures(self, token_to_key: Dict[str, str]) -> None:
         cfg = self.config
 
-        # Manual list: user passes raw tokens → translate to signatures.
+        # Manual list: user passes raw tokens -> translate to signatures.
         manual_sigs = {
             token_to_key[t.lower()]
             for t in cfg.manual_stopwords
@@ -226,11 +242,11 @@ class RecursiveMinHashBlocker:
             self._emit_if_real(parent)
             return
 
-        # Pick the rarest-but-valid signatures first — they discriminate best.
+        # Pick the rarest-but-valid signatures first - they discriminate best.
         candidates.sort(key=lambda x: (x[1], x[0]))
         chosen = candidates[: max(1, cfg.max_keys_per_level)]
         logger.debug(
-            "Block %s depth=%d size=%d → %d candidates, picked %d",
+            "Block %s depth=%d size=%d -> %d candidates, picked %d",
             parent.block_id, parent.depth, parent.size, len(candidates), len(chosen),
         )
 
