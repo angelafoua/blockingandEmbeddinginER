@@ -187,17 +187,37 @@ def export_blocks_to_excel(blocks, filename="blocking_results.xlsx"):
 
 if __name__ == "__main__":
 
+    import sys
+    import os
     import build_refDict
     import build_tokenFreqDict
 
-    refDict = build_refDict.tokenizeInput(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt")
-    #remove stop words
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+    import global_correction
+    import er_metrics
+
+    input_file = r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt"
+    truth_dir  = r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM"
+
+    refDict = build_refDict.tokenizeInput(input_file)
     refDict = remove_high_freq_tokens(refDict, max_freq=6)
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
 
+    # --- Global correction (DWM25) before blocking ---
+    refDict = global_correction.global_replace(refDict, tokenFreqDict)
+    tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
+    # -------------------------------------------------
+
     final_blocks = iterative_blocking(refDict, tokenFreqDict)
 
-    print("\nFinal Blocks:", final_blocks)
-    print("Final number of blocks:", len(final_blocks))
+    print("\nFinal number of blocks:", len(final_blocks))
     print("Total records:", len(refDict))
     export_blocks_to_excel(final_blocks, "blocking_results.xlsx")
+
+    # --- ER metrics (precision / recall / F1) ---
+    truth_file = er_metrics.detect_truth_file(input_file, truth_dir=truth_dir)
+    if truth_file is None:
+        print("No truth file matched for input; skipping ER metrics.")
+    else:
+        er_metrics.compute_metrics(final_blocks, truth_file)
+    # --------------------------------------------
