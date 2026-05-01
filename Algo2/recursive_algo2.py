@@ -116,13 +116,15 @@ def iterative_blocking(initial_blocks):
 if __name__ == "__main__":
     import sys
     import os
-    # Allow importing global_correction.py from the repository root
+    # Allow importing global_correction.py and er_metrics.py from the repository root
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
     import global_correction
+    import er_metrics
 
-    refDict = build_refDict.tokenizeInput(
-        r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt"
-    )
+    input_file = r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt"
+    truth_dir  = r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM"
+
+    refDict = build_refDict.tokenizeInput(input_file)
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
 
     # --- Global correction (DWM25) before blocking ---
@@ -134,5 +136,11 @@ if __name__ == "__main__":
     initial_blocks = blocking(4, refDict, tokenFreqDict)
     final_blocks = iterative_blocking(initial_blocks)
 
-    print(final_blocks)
     print("Final number of blocks:", len(final_blocks))
+
+    # --- ER metrics (precision / recall / F1) ---
+    truth_file = er_metrics.detect_truth_file(input_file, truth_dir=truth_dir)
+    if truth_file is None:
+        print("No truth file matched for input; skipping ER metrics.")
+    else:
+        er_metrics.compute_metrics(final_blocks, truth_file)

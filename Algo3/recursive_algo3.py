@@ -125,7 +125,14 @@ def merge_by_key_overlap(blocks):
 # Full Iterative Blocking Process
 # ------------------------------------------------------------
 
-def iterative_blocking(ref_dict):
+def iterative_blocking(ref_dict, original_ref_dict=None):
+    """Run the iterative k-token blocking process.
+
+    Returns a tuple (current_blocks, refid_blocks) where refid_blocks maps
+    block_key -> set of original refIDs (resolved through all pseudo-record
+    rewrites).  Pass the un-rewritten ref_dict as original_ref_dict to
+    enable that resolution; when omitted the second value mirrors the first.
+    """
     # Compute stopping threshold
     token_lengths = [len(set(tokens)) for tokens in ref_dict.values()]
     mode_length = mode(token_lengths, keepdims=True)[0][0]
@@ -134,6 +141,9 @@ def iterative_blocking(ref_dict):
     print(f"Stopping threshold k = {max_k}")
 
     current_blocks = None
+    # Track which original refIDs end up in each "pseudo-record" id introduced
+    # by the rewrite step at the bottom of the loop.
+    pseudo_to_refs = {rid: {rid} for rid in ref_dict.keys()} if original_ref_dict is not None else None
 
     for k in range(1, max_k + 1):
 
@@ -171,21 +181,50 @@ def iterative_blocking(ref_dict):
 
         current_blocks = blocks
 
-        # Recompute ref_dict from merged blocks
-        # Each block becomes a new pseudo-record
-        ref_dict = {f"block_{i}": list(block)
-                    for i, block in enumerate(blocks.values())}
+        # Recompute ref_dict from merged blocks. Each block becomes a new
+        # pseudo-record whose "tokens" are the refIDs of its members.
+        new_ref_dict = {}
+        new_pseudo_to_refs = {}
+        for i, members in enumerate(blocks.values()):
+            pseudo_id = f"block_{i}"
+            new_ref_dict[pseudo_id] = list(members)
+            if pseudo_to_refs is not None:
+                resolved = set()
+                for m in members:
+                    resolved.update(pseudo_to_refs.get(m, {m}))
+                new_pseudo_to_refs[pseudo_id] = resolved
+        ref_dict = new_ref_dict
+        if pseudo_to_refs is not None:
+            pseudo_to_refs = new_pseudo_to_refs
 
-    return current_blocks
+    # Resolve final blocks back to original refIDs.
+    if current_blocks is None:
+        return {}, {}
+    if pseudo_to_refs is None:
+        # No resolution requested -- return blocks as-is for both.
+        return current_blocks, current_blocks
+
+    refid_blocks = {}
+    for key, members in current_blocks.items():
+        resolved = set()
+        for m in members:
+            resolved.update(pseudo_to_refs.get(m, {m}))
+        refid_blocks[key] = resolved
+    return current_blocks, refid_blocks
+
 
 if __name__ == "__main__":
     import sys
     import os
-    # Allow importing global_correction.py from the repository root
+    # Allow importing global_correction.py and er_metrics.py from the repository root
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
     import global_correction
+    import er_metrics
 
-    refDict = build_refDict.tokenizeInput(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt")
+    input_file = r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt"
+    truth_dir  = r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM"
+
+    refDict = build_refDict.tokenizeInput(input_file)
 
     # --- Global correction (DWM25) before blocking ---
     # Pass word_list_path="DWM_WordList.txt" if you have the word list file.
@@ -193,7 +232,17 @@ if __name__ == "__main__":
     refDict = global_correction.global_replace(refDict, tokenFreqDict)
     # -------------------------------------------------
 
-    result = iterative_blocking(refDict)
+    # Keep a copy of the original refDict so we can resolve pseudo-records
+    # back to real refIDs for evaluation.
+    original_refDict = {rid: list(toks) for rid, toks in refDict.items()}
 
-    print("\nFinal Blocks:", result)
-    print('\nnumber of blocks:', len(result))
+    raw_blocks, refid_blocks = iterative_blocking(refDict, original_ref_dict=original_refDict)
+
+    print('\nnumber of blocks:', len(raw_blocks))
+
+    # --- ER metrics (precision / recall / F1) ---
+    truth_file = er_metrics.detect_truth_file(input_file, truth_dir=truth_dir)
+    if truth_file is None:
+        print("No truth file matched for input; skipping ER metrics.")
+    else:
+        er_metrics.compute_metrics(refid_blocks, truth_file)
