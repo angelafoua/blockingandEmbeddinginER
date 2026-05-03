@@ -196,6 +196,39 @@ def remove_high_frequency_tokens(refDict, tokenFreqDict, max_frequency=60):
     return cleaned, noisy
 
 
+def filter_top_k_smallest(blocks, k=3, min_block_size=2):
+    """Per-record top-k smallest filter (Block Filtering, Papadakis et al.).
+
+    For each record, keep its membership only in the k smallest blocks it
+    belongs to. Drop the rest. Then drop any block that ends up with
+    fewer than min_block_size records (singletons aren't useful for ER).
+
+    This reduces per-record overlap and the total candidate-pair count
+    while keeping each record in its highest-precision blocks.
+    """
+    from collections import defaultdict
+
+    record_to_blocks = defaultdict(list)
+    for key, refs in blocks.items():
+        size = len(refs)
+        for refID in refs:
+            record_to_blocks[refID].append((size, key))
+
+    keep = defaultdict(set)
+    for refID, sized_keys in record_to_blocks.items():
+        sized_keys.sort(key=lambda x: x[0])
+        for _, key in sized_keys[:k]:
+            keep[key].add(refID)
+
+    result = {}
+    for key, refs in blocks.items():
+        kept_ids = keep.get(key, set())
+        if len(kept_ids) < min_block_size:
+            continue
+        result[key] = {r: refs[r] for r in refs if r in kept_ids}
+    return result
+
+
 def blocking(refDict, tokenFreqDict):
     from collections import defaultdict
     blocks = defaultdict(dict)
@@ -238,6 +271,12 @@ if __name__ == "__main__":
     
     print("\nStarting recursive blocking...")
     final_blocks = recursive_blocking(1, initial_blocks, stop_k)
-    
+
+    TOP_K = 3
+    print(f"\nApplying top-{TOP_K} smallest-block filter per record...")
+    before = len(final_blocks)
+    final_blocks = filter_top_k_smallest(final_blocks, k=TOP_K)
+    print(f"  blocks: {before} -> {len(final_blocks)}")
+
     print(f"\n=== FINAL RESULTS ===")
     print(f"Number of final blocks: {len(final_blocks)}")
