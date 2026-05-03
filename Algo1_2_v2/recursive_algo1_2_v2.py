@@ -184,6 +184,18 @@ def purge_subset_blocks(blocks):
     return keep
 
 
+def remove_high_frequency_tokens(refDict, tokenFreqDict, max_frequency=60):
+    """Drop tokens whose document frequency exceeds max_frequency.
+    These act as stop-words: they appear in too many records to discriminate
+    entities (e.g. state codes, generic address terms) and would inflate
+    every block. Returns (cleanedRefDict, removedTokenSet).
+    """
+    noisy = {t for t, f in tokenFreqDict.items() if f > max_frequency}
+    cleaned = {refID: [t for t in tokens if t not in noisy]
+               for refID, tokens in refDict.items()}
+    return cleaned, noisy
+
+
 def blocking(refDict, tokenFreqDict):
     from collections import defaultdict
     blocks = defaultdict(dict)
@@ -209,7 +221,15 @@ if __name__ == "__main__":
 
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     print(f"Built token frequency dict with {len(tokenFreqDict)} unique tokens")
-    
+
+    MAX_TOKEN_FREQUENCY = 60
+    refDict, removed = remove_high_frequency_tokens(refDict, tokenFreqDict,
+                                                   max_frequency=MAX_TOKEN_FREQUENCY)
+    print(f"Stop-word removal: dropped {len(removed)} tokens with freq > {MAX_TOKEN_FREQUENCY}")
+    print(f"  Examples: {sorted(removed, key=lambda t: -tokenFreqDict[t])[:15]}")
+    tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
+    print(f"Rebuilt token frequency dict: {len(tokenFreqDict)} unique tokens remain")
+
     stop_k = compute_stop_k(refDict)
     
     print("\nCreating initial blocks...")
