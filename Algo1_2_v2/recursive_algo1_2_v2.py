@@ -348,8 +348,77 @@ def _print_edge_histogram(edge_weights, n_buckets=10):
         print(f"    [{bucket_lo:.4f}, {bucket_hi:.4f}): {c}")
 
 
-def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform"):
-    """Build ARCS graph, prune edges below tau, return clusters via Union-Find."""
+def _connected_components_from_edges(nodes, edges):
+    """edges: iterable of (a, b). Returns list of components covering nodes."""
+    from collections import defaultdict
+    adj = defaultdict(set)
+    for a, b in edges:
+        adj[a].add(b)
+        adj[b].add(a)
+    visited = set()
+    comps = []
+    for n in nodes:
+        if n in visited:
+            continue
+        stack = [n]
+        comp = []
+        while stack:
+            x = stack.pop()
+            if x in visited:
+                continue
+            visited.add(x)
+            comp.append(x)
+            for y in adj[x]:
+                if y not in visited:
+                    stack.append(y)
+        comps.append(comp)
+    return comps
+
+
+def _split_cluster_by_density(cluster, internal_edges,
+                              density_floor, min_size):
+    """Recursively split a cluster if its internal edge density is below
+    `density_floor`. `internal_edges` is a list of (w, a, b) tuples,
+    only edges within `cluster`. Splitting works by greedily removing
+    the lightest edge until the cluster disconnects, then recursing on
+    each new component using only its surviving edges.
+    """
+    n = len(cluster)
+    if n < min_size:
+        return [cluster]
+
+    max_edges = n * (n - 1) // 2
+    density = len(internal_edges) / max_edges if max_edges > 0 else 1.0
+    if density >= density_floor or not internal_edges:
+        return [cluster]
+
+    sorted_edges = sorted(internal_edges, key=lambda x: x[0])
+    for i in range(len(sorted_edges)):
+        surviving = sorted_edges[i + 1:]
+        comps = _connected_components_from_edges(
+            cluster, [(a, b) for _, a, b in surviving]
+        )
+        if len(comps) > 1:
+            result = []
+            for comp in comps:
+                comp_set = set(comp)
+                comp_edges = [(w, a, b) for (w, a, b) in surviving
+                              if a in comp_set and b in comp_set]
+                result.extend(_split_cluster_by_density(
+                    comp, comp_edges, density_floor, min_size
+                ))
+            return result
+
+    return [cluster]
+
+
+def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform",
+                    density_floor=0.0, density_min_size=3):
+    """Build ARCS graph, prune edges below tau, return clusters via Union-Find.
+    If `density_floor > 0`, post-process clusters by splitting any whose
+    internal edge density falls below the floor (helps resist
+    transitive-closure chain collapse).
+    """
     print(f"\nBuilding ARCS weighted graph (weighting={weighting})...")
     start = time.time()
     edge_weights = build_arcs_graph(blocks, weighting=weighting,
@@ -369,7 +438,39 @@ def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform"):
     clusters = uf.get_clusters()
     multi = [c for c in clusters if len(c) > 1]
     singletons = [c for c in clusters if len(c) == 1]
-    print(f"  Clusters: {len(multi)} multi-record, {len(singletons)} singletons")
+    print(f"  Clusters (pre-density): {len(multi)} multi-record, "
+          f"{len(singletons)} singletons")
+
+    if density_floor > 0.0:
+        print(f"  Density floor {density_floor} applied to clusters of "
+              f"size >= {density_min_size}...")
+        kept_edges = {(a, b): w for (a, b), w in edge_weights.items()
+                      if w >= tau}
+        new_clusters = []
+        n_split = 0
+        n_pieces_added = 0
+        for c in clusters:
+            if len(c) < density_min_size:
+                new_clusters.append(c)
+                continue
+            cset = set(c)
+            internal = [(w, a, b) for (a, b), w in kept_edges.items()
+                        if a in cset and b in cset]
+            pieces = _split_cluster_by_density(
+                c, internal, density_floor, density_min_size
+            )
+            if len(pieces) > 1:
+                n_split += 1
+                n_pieces_added += len(pieces) - 1
+            new_clusters.extend(pieces)
+        clusters = new_clusters
+        multi = [c for c in clusters if len(c) > 1]
+        singletons = [c for c in clusters if len(c) == 1]
+        print(f"  Split {n_split} low-density clusters into "
+              f"{n_split + n_pieces_added} pieces")
+        print(f"  Clusters (post-density): {len(multi)} multi-record, "
+              f"{len(singletons)} singletons")
+
     return clusters
 
 
@@ -481,6 +582,7 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  all_refIDs, do_merge, do_purge,
                  top_k=3, tau=1.0, min_block_size=2, cluster_on="final",
                  arcs_weighting="uniform",
+                 density_floor=0.0, density_min_size=3,
                  original_refDict=None, clusters_json_path=None,
                  single_run=False, include_singletons=True):
     """Run recursive blocking + filter + clustering with given ablation flags."""
@@ -520,7 +622,9 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
 
     t0 = time.time()
     clusters = cluster_records(blocks_for_cluster, all_refIDs, tau=tau,
-                               weighting=arcs_weighting)
+                               weighting=arcs_weighting,
+                               density_floor=density_floor,
+                               density_min_size=density_min_size)
     t_cluster = time.time() - t0
 
     final_blocks = blocks_for_cluster
@@ -539,6 +643,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
             "min_block_size": min_block_size,
             "cluster_on": cluster_on,
             "arcs_weighting": arcs_weighting,
+            "density_floor": density_floor,
+            "density_min_size": density_min_size,
         }
         dump_clusters_json(clusters, original_refDict, out_path,
                            include_singletons=include_singletons,
@@ -624,6 +730,16 @@ def _parse_args():
                         "'idf' = log(N/|B|) / |B| (down-weights generic "
                         "blocks, sharpens precision). Re-tune --tau when "
                         "switching modes.")
+    p.add_argument("--density-floor", type=float, default=0.0,
+                   help="Post-process: split any cluster whose internal "
+                        "edge density (kept-edges / max-possible-edges) "
+                        "is below this floor. 0.0 disables splitting. "
+                        "Useful values: 0.3-0.5. Pair with a lowered "
+                        "--tau to reduce singletons without chain "
+                        "collapse.")
+    p.add_argument("--density-min-size", type=int, default=3,
+                   help="Only consider density splitting for clusters of "
+                        "at least this size.")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
     p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
@@ -723,6 +839,8 @@ if __name__ == "__main__":
     print(f"  top_k               = {args.top_k}")
     print(f"  tau                 = {args.tau}")
     print(f"  arcs_weighting      = {args.arcs_weighting}")
+    print(f"  density_floor       = {args.density_floor} "
+          f"(min_size={args.density_min_size})")
     print(f"  cluster_on          = {args.cluster_on}")
 
     print("\nCreating initial blocks...")
@@ -753,6 +871,8 @@ if __name__ == "__main__":
                             min_block_size=args.min_block_size,
                             cluster_on=args.cluster_on,
                             arcs_weighting=args.arcs_weighting,
+                            density_floor=args.density_floor,
+                            density_min_size=args.density_min_size,
                             original_refDict=original_refDict,
                             clusters_json_path=clusters_json_path,
                             single_run=single_run,
@@ -764,7 +884,9 @@ if __name__ == "__main__":
     print(f"init_df_max={init_df_max}, max_recursion_depth={max_recursion_depth}, "
           f"min_intra_freq={min_intra_freq}, tau={args.tau}, "
           f"top_k={args.top_k}, min_block_size={args.min_block_size}, "
-          f"arcs_weighting={args.arcs_weighting}, cluster_on={args.cluster_on}")
+          f"arcs_weighting={args.arcs_weighting}, "
+          f"density_floor={args.density_floor}, "
+          f"cluster_on={args.cluster_on}")
     print("=" * 110)
     headers = ["merge", "purge", "blks(rec)", "pairs(rec)", "blks(flt)",
                "pairs(flt)", "clusters", "multi", "single",
