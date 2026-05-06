@@ -329,7 +329,7 @@ if __name__ == "__main__":
     print(f"\n=== FINAL RESULTS ===")
     print(f"Number of final blocks: {len(final_blocks)}")
 
-    TAU = 1.0
+    TAU = 0.2
     print(f"\nClustering records (tau={TAU})...")
     clusters = cluster_records(final_blocks, list(refDict.keys()), tau=TAU)
     print(f"\n=== CLUSTERING RESULTS ===")
