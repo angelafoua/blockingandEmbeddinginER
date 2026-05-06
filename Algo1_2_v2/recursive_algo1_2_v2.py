@@ -20,36 +20,6 @@ from scipy.stats import mode
 from math import floor
 import time
 
-def remove_high_freq_tokens(refDict, max_freq=60):
-    """
-    Remove tokens whose frequency is greater than max_freq.
-    """
-
-    from collections import Counter
-
-    # Step 1: Compute token frequencies
-    token_counter = Counter()
-
-    for tokens in refDict.values():
-        token_counter.update(tokens)
-
-    # Step 2: Identify tokens to remove
-    tokens_to_remove = {
-        token for token, freq in token_counter.items()
-        if freq > max_freq
-    }
-
-    print(f"Removing {len(tokens_to_remove)} high-frequency tokens")
-
-    # Step 3: Remove them from records
-    new_refDict = {}
-
-    for refID, tokens in refDict.items():
-        filtered = [t for t in tokens if t not in tokens_to_remove]
-        new_refDict[refID] = filtered
-
-    return new_refDict
-
 def compute_stop_k(refDict):
     token_lengths = [len(set(tokens)) for tokens in refDict.values()]
     mode_length = mode(token_lengths, keepdims=True)[0][0]
@@ -250,7 +220,6 @@ if __name__ == "__main__":
     print("Starting...")
     refDict = build_refDict.tokenizeInput(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt")
     print(f"Loaded {len(refDict)} records")
-    refDict = remove_high_freq_tokens(refDict, max_freq=6)
 
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     print(f"Built token frequency dict with {len(tokenFreqDict)} unique tokens")
