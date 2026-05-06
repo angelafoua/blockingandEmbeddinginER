@@ -199,6 +199,85 @@ def filter_top_k_smallest(blocks, k=3, min_block_size=2):
     return result
 
 
+class UnionFind:
+    def __init__(self, elements):
+        self.parent = {e: e for e in elements}
+        self.rank = {e: 0 for e in elements}
+
+    def find(self, x):
+        while self.parent[x] != x:
+            self.parent[x] = self.parent[self.parent[x]]  # path compression
+            x = self.parent[x]
+        return x
+
+    def union(self, a, b):
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb:
+            return
+        if self.rank[ra] < self.rank[rb]:
+            ra, rb = rb, ra
+        self.parent[rb] = ra
+        if self.rank[ra] == self.rank[rb]:
+            self.rank[ra] += 1
+
+    def get_clusters(self):
+        from collections import defaultdict
+        clusters = defaultdict(list)
+        for e in self.parent:
+            clusters[self.find(e)].append(e)
+        return list(clusters.values())
+
+
+def build_arcs_graph(blocks):
+    """Build a weighted graph using ARCS scoring.
+
+    For each block of size s, every pair (A, B) in it gets 1/s added to its
+    edge weight. This rewards co-occurrence in small (specific) blocks more
+    than in large (generic) ones.
+
+    Returns {(refID_a, refID_b): weight} with refID_a < refID_b.
+    """
+    from collections import defaultdict
+    edge_weights = defaultdict(float)
+
+    for refs in blocks.values():
+        ref_list = list(refs.keys())
+        block_size = len(ref_list)
+        if block_size < 2:
+            continue
+        contribution = 1.0 / block_size
+        for i in range(len(ref_list)):
+            for j in range(i + 1, len(ref_list)):
+                a, b = ref_list[i], ref_list[j]
+                if a > b:
+                    a, b = b, a
+                edge_weights[(a, b)] += contribution
+
+    return edge_weights
+
+
+def cluster_records(blocks, all_refIDs, tau=1.0):
+    """Build ARCS graph, prune edges below tau, return clusters via Union-Find."""
+    print("\nBuilding ARCS weighted graph...")
+    start = time.time()
+    edge_weights = build_arcs_graph(blocks)
+    print(f"  Graph built in {time.time() - start:.2f}s — {len(edge_weights)} edges")
+
+    uf = UnionFind(all_refIDs)
+    kept = 0
+    for (a, b), w in edge_weights.items():
+        if w >= tau:
+            uf.union(a, b)
+            kept += 1
+    print(f"  Edges kept (weight >= {tau}): {kept} / {len(edge_weights)}")
+
+    clusters = uf.get_clusters()
+    multi = [c for c in clusters if len(c) > 1]
+    singletons = [c for c in clusters if len(c) == 1]
+    print(f"  Clusters: {len(multi)} multi-record, {len(singletons)} singletons")
+    return clusters
+
+
 def blocking(refDict, tokenFreqDict):
     from collections import defaultdict
     blocks = defaultdict(dict)
@@ -249,3 +328,11 @@ if __name__ == "__main__":
 
     print(f"\n=== FINAL RESULTS ===")
     print(f"Number of final blocks: {len(final_blocks)}")
+
+    TAU = 1.0
+    print(f"\nClustering records (tau={TAU})...")
+    clusters = cluster_records(final_blocks, list(refDict.keys()), tau=TAU)
+    print(f"\n=== CLUSTERING RESULTS ===")
+    print(f"Total clusters: {len(clusters)}")
+    print(f"Multi-record clusters: {sum(1 for c in clusters if len(c) > 1)}")
+    print(f"Singletons: {sum(1 for c in clusters if len(c) == 1)}")
