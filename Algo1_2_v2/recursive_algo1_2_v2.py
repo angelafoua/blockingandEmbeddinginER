@@ -20,12 +20,12 @@ from scipy.stats import mode
 from math import floor
 import time
 
-def compute_stop_k(refDict):
+def compute_stop_k(refDict, factor=0.6):
     token_lengths = [len(set(tokens)) for tokens in refDict.values()]
     mode_length = mode(token_lengths, keepdims=True)[0][0]
-    stop_k = floor(0.6 * mode_length)
+    stop_k = floor(factor * mode_length)
     print("Mode token length:", mode_length)
-    print("Stopping threshold k:", stop_k)
+    print(f"Stopping threshold k: {stop_k} (factor={factor})")
     return stop_k
 
 def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True):
@@ -386,7 +386,11 @@ if __name__ == "__main__":
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     print(f"Rebuilt token frequency dict: {len(tokenFreqDict)} unique tokens remain")
 
-    stop_k = compute_stop_k(refDict)
+    # Tune stop_k by setting STOP_K (explicit int) or STOP_K_FACTOR (multiplier
+     # of the modal record length). STOP_K wins when both are set.
+    STOP_K = None
+    STOP_K_FACTOR = 0.6
+    stop_k = STOP_K if STOP_K is not None else compute_stop_k(refDict, factor=STOP_K_FACTOR)
 
     print("\nCreating initial blocks...")
     initial_blocks = blocking(refDict, tokenFreqDict, beta=stop_k)
