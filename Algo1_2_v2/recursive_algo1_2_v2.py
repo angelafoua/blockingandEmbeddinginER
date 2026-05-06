@@ -405,9 +405,59 @@ def candidate_pairs(blocks):
     return sum((len(refs) * (len(refs) - 1)) // 2 for refs in blocks.values())
 
 
+def dump_clusters_json(clusters, original_refDict, out_path,
+                       include_singletons=True, metadata=None):
+    """Write cluster composition to a JSON file.
+
+    Each cluster is assigned an integer `cluster_id` after sorting by
+    size descending (so cluster 0 is the largest). Each record carries
+    its full token list from the ORIGINAL refDict (pre stop-word
+    removal), so all elements of the record are present.
+    """
+    import json
+    from pathlib import Path
+
+    sized = sorted(clusters, key=lambda c: (-len(c), c[0] if c else ""))
+    payload_clusters = []
+    for cid, members in enumerate(sized):
+        if not include_singletons and len(members) <= 1:
+            continue
+        records = []
+        for refID in members:
+            tokens = original_refDict.get(refID, [])
+            records.append({"refID": refID, "tokens": list(tokens)})
+        payload_clusters.append({
+            "cluster_id": cid,
+            "size": len(members),
+            "records": records,
+        })
+
+    payload = {
+        "metadata": metadata or {},
+        "n_clusters": len(payload_clusters),
+        "clusters": payload_clusters,
+    }
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    print(f"  Wrote {len(payload_clusters)} clusters to {out_path}")
+
+
+def _path_with_config_suffix(base_path, do_merge, do_purge):
+    """Insert merge/purge suffix before the file extension."""
+    from pathlib import Path
+    p = Path(base_path)
+    suffix = f"_m{int(do_merge)}_p{int(do_purge)}"
+    return p.with_name(p.stem + suffix + p.suffix)
+
+
 def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  all_refIDs, do_merge, do_purge,
-                 top_k=3, tau=1.0, min_block_size=2, cluster_on="final"):
+                 top_k=3, tau=1.0, min_block_size=2, cluster_on="final",
+                 original_refDict=None, clusters_json_path=None,
+                 single_run=False, include_singletons=True):
     """Run recursive blocking + filter + clustering with given ablation flags."""
     import copy, tracemalloc
 
@@ -448,6 +498,24 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
     t_cluster = time.time() - t0
 
     final_blocks = blocks_for_cluster
+
+    if clusters_json_path is not None and original_refDict is not None:
+        out_path = (clusters_json_path if single_run
+                    else _path_with_config_suffix(clusters_json_path,
+                                                  do_merge, do_purge))
+        meta = {
+            "do_merge": do_merge,
+            "do_purge": do_purge,
+            "max_recursion_depth": max_recursion_depth,
+            "min_intra_freq": min_intra_freq,
+            "top_k": top_k,
+            "tau": tau,
+            "min_block_size": min_block_size,
+            "cluster_on": cluster_on,
+        }
+        dump_clusters_json(clusters, original_refDict, out_path,
+                           include_singletons=include_singletons,
+                           metadata=meta)
 
     _, peak_mem = tracemalloc.get_traced_memory()
     tracemalloc.stop()
@@ -524,6 +592,13 @@ def _parse_args():
     p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
                    help="Which recursion snapshot feeds clustering: the "
                         "final state (default) or the peak-block-count state.")
+    p.add_argument("--clusters-json", default="clusters.json",
+                   help="Path to write cluster composition (cluster_id -> "
+                        "records with their full token list). In ablation "
+                        "mode, '_m{0,1}_p{0,1}' is appended per config. "
+                        "Set to empty string to disable.")
+    p.add_argument("--no-singletons-json", action="store_true",
+                   help="Exclude singleton clusters from the JSON dump.")
     return p.parse_args()
 
 
@@ -567,6 +642,10 @@ if __name__ == "__main__":
     print("Starting...")
     refDict = build_refDict.tokenizeInput(args.input)
     print(f"Loaded {len(refDict)} records")
+
+    # Preserve the original tokenization (pre stop-word removal) so the
+    # clusters JSON dump can include all elements of each record.
+    original_refDict = {k: list(v) for k, v in refDict.items()}
 
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     print(f"Built token frequency dict with {len(tokenFreqDict)} unique tokens")
@@ -629,11 +708,16 @@ if __name__ == "__main__":
             (False, False),  # V3 neither
         ]
 
+    clusters_json_path = args.clusters_json or None
     results = [run_pipeline(initial_blocks, max_recursion_depth,
                             min_intra_freq, all_refIDs, m, p,
                             top_k=args.top_k, tau=args.tau,
                             min_block_size=args.min_block_size,
-                            cluster_on=args.cluster_on)
+                            cluster_on=args.cluster_on,
+                            original_refDict=original_refDict,
+                            clusters_json_path=clusters_json_path,
+                            single_run=single_run,
+                            include_singletons=not args.no_singletons_json)
                for (m, p) in configs]
 
     print("\n\n" + "=" * 110)
