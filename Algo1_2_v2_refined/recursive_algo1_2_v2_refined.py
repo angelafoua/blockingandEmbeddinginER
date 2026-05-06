@@ -35,10 +35,10 @@ def remove_high_freq_tokens(refDict, max_freq=60):
 
     return new_refDict
 
-def compute_stop_k(refDict):
+def compute_stop_k(refDict, factor=0.6):
     token_lengths = [len(set(tokens)) for tokens in refDict.values()]
     mode_length = mode(token_lengths, keepdims=True)[0][0]
-    return floor(0.6 * mode_length)
+    return floor(factor * mode_length)
 
 
 def initial_partition(refDict, tokenFreqDict):
@@ -126,9 +126,10 @@ def refine_partition(blocks, beta):
     return newBlocks
 
 
-def iterative_blocking(refDict, tokenFreqDict):
+def iterative_blocking(refDict, tokenFreqDict, stop_k=None, stop_k_factor=0.6):
 
-    stop_k = compute_stop_k(refDict)
+    if stop_k is None:
+        stop_k = compute_stop_k(refDict, factor=stop_k_factor)
 
     blocks = initial_partition(refDict, tokenFreqDict)
 
@@ -208,7 +209,13 @@ if __name__ == "__main__":
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     # -------------------------------------------------
 
-    final_blocks = iterative_blocking(refDict, tokenFreqDict)
+    # Tune stop_k by setting STOP_K (explicit int) or STOP_K_FACTOR (multiplier
+     # of the modal record length). STOP_K wins when both are set.
+    STOP_K = None
+    STOP_K_FACTOR = 0.6
+    final_blocks = iterative_blocking(refDict, tokenFreqDict,
+                                      stop_k=STOP_K,
+                                      stop_k_factor=STOP_K_FACTOR)
 
     print("\nFinal number of blocks:", len(final_blocks))
     print("Total records:", len(refDict))
