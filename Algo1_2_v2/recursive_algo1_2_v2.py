@@ -370,27 +370,54 @@ def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
     }
 
 
+def _parse_args():
+    import argparse
+    p = argparse.ArgumentParser(
+        description="Recursive blocking pipeline (algo1_2_v2). "
+                    "With no merge/purge flags, runs the 4-way ablation; "
+                    "with --no-merge or --no-purge, runs a single config."
+    )
+    p.add_argument("--input", default="S12PX.txt",
+                   help="Input file for build_refDict.tokenizeInput.")
+    p.add_argument("--max-freq", type=int, default=60,
+                   help="Drop tokens with document frequency > this value.")
+    p.add_argument("--stop-k", type=int, default=None,
+                   help="Explicit stop_k (overrides --stop-k-factor).")
+    p.add_argument("--stop-k-factor", type=float, default=0.6,
+                   help="Multiplier of modal record length when --stop-k is unset.")
+    p.add_argument("--no-merge", action="store_true",
+                   help="Disable merge_blocks; triggers single-config run.")
+    p.add_argument("--no-purge", action="store_true",
+                   help="Disable purge_subset_blocks; triggers single-config run.")
+    p.add_argument("--tau", type=float, default=1.0,
+                   help="ARCS edge-weight threshold for clustering.")
+    p.add_argument("--top-k", type=int, default=3,
+                   help="Per-record top-k smallest-block filter.")
+    return p.parse_args()
+
+
 if __name__ == "__main__":
+    args = _parse_args()
+
     print("Starting...")
-    refDict = build_refDict.tokenizeInput("S12PX.txt")
+    refDict = build_refDict.tokenizeInput(args.input)
     print(f"Loaded {len(refDict)} records")
 
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     print(f"Built token frequency dict with {len(tokenFreqDict)} unique tokens")
 
-    MAX_TOKEN_FREQUENCY = 60
     refDict, removed = remove_high_frequency_tokens(refDict, tokenFreqDict,
-                                                   max_frequency=MAX_TOKEN_FREQUENCY)
-    print(f"Stop-word removal: dropped {len(removed)} tokens with freq > {MAX_TOKEN_FREQUENCY}")
+                                                   max_frequency=args.max_freq)
+    print(f"Stop-word removal: dropped {len(removed)} tokens with freq > {args.max_freq}")
     print(f"  Examples: {sorted(removed, key=lambda t: -tokenFreqDict[t])[:15]}")
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     print(f"Rebuilt token frequency dict: {len(tokenFreqDict)} unique tokens remain")
 
-    # Tune stop_k by setting STOP_K (explicit int) or STOP_K_FACTOR (multiplier
-     # of the modal record length). STOP_K wins when both are set.
-    STOP_K = None
-    STOP_K_FACTOR = 0.6
-    stop_k = STOP_K if STOP_K is not None else compute_stop_k(refDict, factor=STOP_K_FACTOR)
+    if args.stop_k is not None:
+        stop_k = args.stop_k
+        print(f"Stopping threshold k: {stop_k} (explicit override)")
+    else:
+        stop_k = compute_stop_k(refDict, factor=args.stop_k_factor)
 
     print("\nCreating initial blocks...")
     initial_blocks = blocking(refDict, tokenFreqDict, beta=stop_k)
@@ -398,19 +425,26 @@ if __name__ == "__main__":
 
     all_refIDs = list(refDict.keys())
 
-    # Ablation: run all four (merge x purge) combinations on the same input.
-    configs = [
-        (True,  True),   # V0 baseline
-        (True,  False),  # V1 no purge
-        (False, True),   # V2 no merge
-        (False, False),  # V3 neither
-    ]
-    results = [run_pipeline(initial_blocks, stop_k, all_refIDs, m, p)
+    single_run = args.no_merge or args.no_purge
+    if single_run:
+        configs = [(not args.no_merge, not args.no_purge)]
+    else:
+        # Default: run all four (merge x purge) combinations on the same input.
+        configs = [
+            (True,  True),   # V0 baseline
+            (True,  False),  # V1 no purge
+            (False, True),   # V2 no merge
+            (False, False),  # V3 neither
+        ]
+
+    results = [run_pipeline(initial_blocks, stop_k, all_refIDs, m, p,
+                            top_k=args.top_k, tau=args.tau)
                for (m, p) in configs]
 
     # Comparison table
     print("\n\n" + "=" * 110)
-    print("ABLATION SUMMARY")
+    print("ABLATION SUMMARY" if not single_run else "RUN SUMMARY")
+    print(f"stop_k={stop_k}, tau={args.tau}, top_k={args.top_k}")
     print("=" * 110)
     headers = ["merge", "purge", "blks(rec)", "pairs(rec)", "blks(flt)",
                "pairs(flt)", "clusters", "multi", "single",
