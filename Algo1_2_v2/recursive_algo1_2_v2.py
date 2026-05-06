@@ -517,7 +517,7 @@ def _parse_args():
                    help="Disable merge_blocks; triggers single-config run.")
     p.add_argument("--no-purge", action="store_true",
                    help="Disable purge_subset_blocks; triggers single-config run.")
-    p.add_argument("--tau", type=float, default=1.0,
+    p.add_argument("--tau", type=float, default=0.2,
                    help="ARCS edge-weight threshold for clustering.")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
