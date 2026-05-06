@@ -28,39 +28,50 @@ def compute_stop_k(refDict):
     print("Stopping threshold k:", stop_k)
     return stop_k
 
-def recursive_blocking(beta, blocks, stop_k):
-    print(f"\n--- Beta = {beta}, Stop_k = {stop_k} ---")
+def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True):
+    print(f"\n--- Beta = {beta}, Stop_k = {stop_k} "
+          f"(do_merge={do_merge}, do_purge={do_purge}) ---")
     print(f"Current number of blocks: {len(blocks)}")
-    
+
     if beta > stop_k:
         print("Stopping: beta > stop_k")
         return blocks
-    
+
     print(f"Calling refine_blocks with beta={beta}...")
     start_time = time.time()
     newBlocks = refine_blocks(blocks, beta)
     refine_time = time.time() - start_time
     print(f"refine_blocks took {refine_time:.2f} seconds, produced {len(newBlocks) if newBlocks else 0} blocks")
-    
+
     if not newBlocks:
         print("Stopping: newBlocks is empty")
         return blocks
-    
-    print(f"Merging blocks...")
-    start_time = time.time()
-    merged_blocks = merge_blocks(blocks, newBlocks)
-    merge_time = time.time() - start_time
-    print(f"merge_blocks took {merge_time:.2f} seconds, result: {len(merged_blocks)} blocks")
 
-    print(f"Purging subset blocks...")
-    start_time = time.time()
-    before = len(merged_blocks)
-    merged_blocks = purge_subset_blocks(merged_blocks)
-    purge_time = time.time() - start_time
-    print(f"purge_subset_blocks took {purge_time:.2f} seconds, "
-          f"dropped {before - len(merged_blocks)}, result: {len(merged_blocks)} blocks")
+    if do_merge:
+        print(f"Merging blocks...")
+        start_time = time.time()
+        merged_blocks = merge_blocks(blocks, newBlocks)
+        merge_time = time.time() - start_time
+        print(f"merge_blocks took {merge_time:.2f} seconds, result: {len(merged_blocks)} blocks")
+    else:
+        # Naive union: keep both, last-write-wins on key collision (no ref-set dedup)
+        print(f"Skipping merge_blocks (do_merge=False); naive concat...")
+        merged_blocks = {**blocks, **newBlocks}
+        print(f"  result: {len(merged_blocks)} blocks")
 
-    return recursive_blocking(beta + 1, merged_blocks, stop_k)
+    if do_purge:
+        print(f"Purging subset blocks...")
+        start_time = time.time()
+        before = len(merged_blocks)
+        merged_blocks = purge_subset_blocks(merged_blocks)
+        purge_time = time.time() - start_time
+        print(f"purge_subset_blocks took {purge_time:.2f} seconds, "
+              f"dropped {before - len(merged_blocks)}, result: {len(merged_blocks)} blocks")
+    else:
+        print(f"Skipping purge_subset_blocks (do_purge=False)")
+
+    return recursive_blocking(beta + 1, merged_blocks, stop_k,
+                              do_merge=do_merge, do_purge=do_purge)
 
 def merge_blocks(old_blocks, new_blocks):
     """Optimized merge using a single pass with hash-based deduplication"""
@@ -295,6 +306,61 @@ def blocking(refDict, tokenFreqDict):
     
     return blocks
 
+def candidate_pairs(blocks):
+    """Total number of intra-block pairs across all blocks (with multiplicity)."""
+    return sum((len(refs) * (len(refs) - 1)) // 2 for refs in blocks.values())
+
+
+def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
+                 top_k=3, tau=1.0):
+    """Run recursive blocking + filter + clustering with given ablation flags.
+    Returns a metrics dict.
+    """
+    import copy, tracemalloc
+
+    label = f"merge={do_merge}, purge={do_purge}"
+    print(f"\n{'#' * 70}\n# RUN: {label}\n{'#' * 70}")
+
+    blocks_in = copy.deepcopy(initial_blocks)
+
+    tracemalloc.start()
+    t0 = time.time()
+    final_blocks = recursive_blocking(1, blocks_in, stop_k,
+                                      do_merge=do_merge, do_purge=do_purge)
+    t_recursive = time.time() - t0
+
+    n_blocks_post_recursive = len(final_blocks)
+    pairs_post_recursive = candidate_pairs(final_blocks)
+
+    t0 = time.time()
+    final_blocks = filter_top_k_smallest(final_blocks, k=top_k)
+    t_filter = time.time() - t0
+
+    t0 = time.time()
+    clusters = cluster_records(final_blocks, all_refIDs, tau=tau)
+    t_cluster = time.time() - t0
+
+    _, peak_mem = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    return {
+        "label": label,
+        "do_merge": do_merge,
+        "do_purge": do_purge,
+        "blocks_post_recursive": n_blocks_post_recursive,
+        "pairs_post_recursive": pairs_post_recursive,
+        "blocks_post_filter": len(final_blocks),
+        "pairs_post_filter": candidate_pairs(final_blocks),
+        "clusters_total": len(clusters),
+        "clusters_multi": sum(1 for c in clusters if len(c) > 1),
+        "clusters_singletons": sum(1 for c in clusters if len(c) == 1),
+        "time_recursive_s": t_recursive,
+        "time_filter_s": t_filter,
+        "time_cluster_s": t_cluster,
+        "peak_mem_mb": peak_mem / (1024 * 1024),
+    }
+
+
 if __name__ == "__main__":
     print("Starting...")
     refDict = build_refDict.tokenizeInput("S12PX.txt")
@@ -312,27 +378,40 @@ if __name__ == "__main__":
     print(f"Rebuilt token frequency dict: {len(tokenFreqDict)} unique tokens remain")
 
     stop_k = compute_stop_k(refDict)
-    
+
     print("\nCreating initial blocks...")
     initial_blocks = blocking(refDict, tokenFreqDict)
     print(f"Initial blocks created: {len(initial_blocks)}")
-    
-    print("\nStarting recursive blocking...")
-    final_blocks = recursive_blocking(1, initial_blocks, stop_k)
 
-    TOP_K = 3
-    print(f"\nApplying top-{TOP_K} smallest-block filter per record...")
-    before = len(final_blocks)
-    final_blocks = filter_top_k_smallest(final_blocks, k=TOP_K)
-    print(f"  blocks: {before} -> {len(final_blocks)}")
+    all_refIDs = list(refDict.keys())
 
-    print(f"\n=== FINAL RESULTS ===")
-    print(f"Number of final blocks: {len(final_blocks)}")
+    # Ablation: run all four (merge x purge) combinations on the same input.
+    configs = [
+        (True,  True),   # V0 baseline
+        (True,  False),  # V1 no purge
+        (False, True),   # V2 no merge
+        (False, False),  # V3 neither
+    ]
+    results = [run_pipeline(initial_blocks, stop_k, all_refIDs, m, p)
+               for (m, p) in configs]
 
-    TAU = 1.0
-    print(f"\nClustering records (tau={TAU})...")
-    clusters = cluster_records(final_blocks, list(refDict.keys()), tau=TAU)
-    print(f"\n=== CLUSTERING RESULTS ===")
-    print(f"Total clusters: {len(clusters)}")
-    print(f"Multi-record clusters: {sum(1 for c in clusters if len(c) > 1)}")
-    print(f"Singletons: {sum(1 for c in clusters if len(c) == 1)}")
+    # Comparison table
+    print("\n\n" + "=" * 110)
+    print("ABLATION SUMMARY")
+    print("=" * 110)
+    headers = ["merge", "purge", "blks(rec)", "pairs(rec)", "blks(flt)",
+               "pairs(flt)", "clusters", "multi", "single",
+               "t_rec(s)", "t_flt(s)", "t_clu(s)", "peak(MB)"]
+    fmt = "{:>5} {:>5} {:>10} {:>12} {:>10} {:>12} {:>9} {:>6} {:>7} {:>9} {:>9} {:>9} {:>9}"
+    print(fmt.format(*headers))
+    print("-" * 110)
+    for r in results:
+        print(fmt.format(
+            str(r["do_merge"])[0], str(r["do_purge"])[0],
+            r["blocks_post_recursive"], r["pairs_post_recursive"],
+            r["blocks_post_filter"], r["pairs_post_filter"],
+            r["clusters_total"], r["clusters_multi"], r["clusters_singletons"],
+            f"{r['time_recursive_s']:.2f}", f"{r['time_filter_s']:.2f}",
+            f"{r['time_cluster_s']:.2f}", f"{r['peak_mem_mb']:.1f}",
+        ))
+    print("=" * 110)
