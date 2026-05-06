@@ -289,21 +289,30 @@ def cluster_records(blocks, all_refIDs, tau=1.0):
     return clusters
 
 
-def blocking(refDict, tokenFreqDict):
+def blocking(refDict, tokenFreqDict, beta,
+             minBlkTokenLen=4, excludeNumericBlocks=True):
+    """Select blocking tokens the way DWM42_BuildBlockPairs does:
+    len(token) >= minBlkTokenLen, not pure-digit (when excluded),
+    and 2 <= freq <= beta. `beta` is the upper-frequency bound
+    (== stop_k in this pipeline)."""
     from collections import defaultdict
     blocks = defaultdict(dict)
-    avg_freq = mean(tokenFreqDict.values())
-    threshold = 1.1 * avg_freq
-    print("Average token frequency:", avg_freq)
-    print("Token threshold:", threshold)
-    
-    for key in refDict:
-        tokenList = refDict[key]
-        for token in tokenList:
+    print(f"Blocking filters: minBlkTokenLen={minBlkTokenLen}, "
+          f"excludeNumericBlocks={excludeNumericBlocks}, "
+          f"freq window=[2, {beta}]")
+
+    for key, tokenList in refDict.items():
+        tokenSet = set(tokenList)
+        for token in tokenSet:
+            if len(token) < minBlkTokenLen:
+                continue
+            if excludeNumericBlocks and token.isdigit():
+                continue
             freq = tokenFreqDict[token]
-            if freq >= threshold:
-                blocks[token][key] = set(tokenList)
-    
+            if freq < 2 or freq > beta:
+                continue
+            blocks[token][key] = tokenSet
+
     return blocks
 
 def candidate_pairs(blocks):
@@ -380,7 +389,7 @@ if __name__ == "__main__":
     stop_k = compute_stop_k(refDict)
 
     print("\nCreating initial blocks...")
-    initial_blocks = blocking(refDict, tokenFreqDict)
+    initial_blocks = blocking(refDict, tokenFreqDict, beta=stop_k)
     print(f"Initial blocks created: {len(initial_blocks)}")
 
     all_refIDs = list(refDict.keys())
