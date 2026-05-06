@@ -282,8 +282,23 @@ class UnionFind:
         return list(clusters.values())
 
 
-def build_arcs_graph(blocks):
-    """Build a weighted graph using ARCS scoring."""
+def build_arcs_graph(blocks, weighting="uniform", corpus_size=None):
+    """Build a weighted graph using ARCS scoring.
+
+    For each block of size s containing N_corpus total records, every
+    pair (A, B) in the block accumulates a contribution to its edge:
+
+      weighting="uniform":  contribution = 1 / s
+      weighting="idf":      contribution = log(N_corpus / s) / s
+
+    Uniform is the original ARCS scoring; IDF additionally penalises
+    generic (large) blocks by weighting each block's contribution by
+    its inverse-document-frequency. Specific blocks (small s) dominate;
+    generic blocks (large s) become near-zero.
+
+    Returns {(refID_a, refID_b): weight} with refID_a < refID_b.
+    """
+    import math
     from collections import defaultdict
     edge_weights = defaultdict(float)
 
@@ -292,7 +307,15 @@ def build_arcs_graph(blocks):
         block_size = len(ref_list)
         if block_size < 2:
             continue
-        contribution = 1.0 / block_size
+        if weighting == "idf":
+            if corpus_size is None or corpus_size <= block_size:
+                contribution = 0.0
+            else:
+                contribution = math.log(corpus_size / block_size) / block_size
+        else:
+            contribution = 1.0 / block_size
+        if contribution == 0.0:
+            continue
         for i in range(len(ref_list)):
             for j in range(i + 1, len(ref_list)):
                 a, b = ref_list[i], ref_list[j]
@@ -325,11 +348,12 @@ def _print_edge_histogram(edge_weights, n_buckets=10):
         print(f"    [{bucket_lo:.4f}, {bucket_hi:.4f}): {c}")
 
 
-def cluster_records(blocks, all_refIDs, tau=1.0):
+def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform"):
     """Build ARCS graph, prune edges below tau, return clusters via Union-Find."""
-    print("\nBuilding ARCS weighted graph...")
+    print(f"\nBuilding ARCS weighted graph (weighting={weighting})...")
     start = time.time()
-    edge_weights = build_arcs_graph(blocks)
+    edge_weights = build_arcs_graph(blocks, weighting=weighting,
+                                    corpus_size=len(all_refIDs))
     print(f"  Graph built in {time.time() - start:.2f}s — {len(edge_weights)} edges")
 
     _print_edge_histogram(edge_weights)
@@ -456,6 +480,7 @@ def _path_with_config_suffix(base_path, do_merge, do_purge):
 def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  all_refIDs, do_merge, do_purge,
                  top_k=3, tau=1.0, min_block_size=2, cluster_on="final",
+                 arcs_weighting="uniform",
                  original_refDict=None, clusters_json_path=None,
                  single_run=False, include_singletons=True):
     """Run recursive blocking + filter + clustering with given ablation flags."""
@@ -494,7 +519,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
     t_filter = time.time() - t0
 
     t0 = time.time()
-    clusters = cluster_records(blocks_for_cluster, all_refIDs, tau=tau)
+    clusters = cluster_records(blocks_for_cluster, all_refIDs, tau=tau,
+                               weighting=arcs_weighting)
     t_cluster = time.time() - t0
 
     final_blocks = blocks_for_cluster
@@ -512,6 +538,7 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
             "tau": tau,
             "min_block_size": min_block_size,
             "cluster_on": cluster_on,
+            "arcs_weighting": arcs_weighting,
         }
         dump_clusters_json(clusters, original_refDict, out_path,
                            include_singletons=include_singletons,
@@ -586,7 +613,17 @@ def _parse_args():
     p.add_argument("--no-purge", action="store_true",
                    help="Disable purge_subset_blocks; triggers single-config run.")
     p.add_argument("--tau", type=float, default=0.2,
-                   help="ARCS edge-weight threshold for clustering.")
+                   help="ARCS edge-weight threshold for clustering. "
+                        "Note: scale depends on --arcs-weighting (uniform "
+                        "weights live in [0, ~1]; idf weights live in "
+                        "[0, log(N)] where N is corpus size).")
+    p.add_argument("--arcs-weighting", choices=["uniform", "idf"],
+                   default="uniform",
+                   help="ARCS contribution per shared block. "
+                        "'uniform' = 1/|B| (original); "
+                        "'idf' = log(N/|B|) / |B| (down-weights generic "
+                        "blocks, sharpens precision). Re-tune --tau when "
+                        "switching modes.")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
     p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
@@ -685,6 +722,7 @@ if __name__ == "__main__":
     print(f"  min_block_size      = {args.min_block_size}")
     print(f"  top_k               = {args.top_k}")
     print(f"  tau                 = {args.tau}")
+    print(f"  arcs_weighting      = {args.arcs_weighting}")
     print(f"  cluster_on          = {args.cluster_on}")
 
     print("\nCreating initial blocks...")
@@ -714,6 +752,7 @@ if __name__ == "__main__":
                             top_k=args.top_k, tau=args.tau,
                             min_block_size=args.min_block_size,
                             cluster_on=args.cluster_on,
+                            arcs_weighting=args.arcs_weighting,
                             original_refDict=original_refDict,
                             clusters_json_path=clusters_json_path,
                             single_run=single_run,
@@ -725,7 +764,7 @@ if __name__ == "__main__":
     print(f"init_df_max={init_df_max}, max_recursion_depth={max_recursion_depth}, "
           f"min_intra_freq={min_intra_freq}, tau={args.tau}, "
           f"top_k={args.top_k}, min_block_size={args.min_block_size}, "
-          f"cluster_on={args.cluster_on}")
+          f"arcs_weighting={args.arcs_weighting}, cluster_on={args.cluster_on}")
     print("=" * 110)
     headers = ["merge", "purge", "blks(rec)", "pairs(rec)", "blks(flt)",
                "pairs(flt)", "clusters", "multi", "single",
