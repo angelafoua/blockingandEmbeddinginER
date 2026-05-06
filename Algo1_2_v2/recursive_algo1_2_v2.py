@@ -28,10 +28,16 @@ def compute_stop_k(refDict, factor=0.6):
     print(f"Stopping threshold k: {stop_k} (factor={factor})")
     return stop_k
 
-def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True):
+def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True, peak=None):
     print(f"\n--- Beta = {beta}, Stop_k = {stop_k} "
           f"(do_merge={do_merge}, do_purge={do_purge}) ---")
     print(f"Current number of blocks: {len(blocks)}")
+
+    # Record the entry-state snapshot (covers the initial-blocks case at beta=1).
+    if peak is not None and len(blocks) > peak["size"]:
+        peak["size"] = len(blocks)
+        peak["blocks"] = blocks
+        peak["beta"] = beta - 1
 
     if beta > stop_k:
         print("Stopping: beta > stop_k")
@@ -70,8 +76,13 @@ def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True):
     else:
         print(f"Skipping purge_subset_blocks (do_purge=False)")
 
+    if peak is not None and len(merged_blocks) > peak["size"]:
+        peak["size"] = len(merged_blocks)
+        peak["blocks"] = merged_blocks
+        peak["beta"] = beta
+
     return recursive_blocking(beta + 1, merged_blocks, stop_k,
-                              do_merge=do_merge, do_purge=do_purge)
+                              do_merge=do_merge, do_purge=do_purge, peak=peak)
 
 def merge_blocks(old_blocks, new_blocks):
     """Optimized merge using a single pass with hash-based deduplication"""
@@ -321,8 +332,11 @@ def candidate_pairs(blocks):
 
 
 def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
-                 top_k=3, tau=1.0):
+                 top_k=3, tau=1.0, cluster_on="peak"):
     """Run recursive blocking + filter + clustering with given ablation flags.
+    `cluster_on` selects which recursion snapshot feeds the filter+clustering:
+      - "peak": the highest-block-count state observed during recursion
+      - "final": the state at the end of recursion (legacy behavior)
     Returns a metrics dict.
     """
     import copy, tracemalloc
@@ -334,20 +348,34 @@ def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
 
     tracemalloc.start()
     t0 = time.time()
+    peak = {"blocks": blocks_in, "size": len(blocks_in), "beta": 0}
     final_blocks = recursive_blocking(1, blocks_in, stop_k,
-                                      do_merge=do_merge, do_purge=do_purge)
+                                      do_merge=do_merge, do_purge=do_purge,
+                                      peak=peak)
     t_recursive = time.time() - t0
 
-    n_blocks_post_recursive = len(final_blocks)
-    pairs_post_recursive = candidate_pairs(final_blocks)
+    print(f"\nPeak block count during recursion: {peak['size']} "
+          f"(at beta={peak['beta']})")
+
+    if cluster_on == "peak":
+        print(f"Clustering on PEAK snapshot ({peak['size']} blocks)")
+        blocks_for_cluster = peak["blocks"]
+    else:
+        print(f"Clustering on FINAL snapshot ({len(final_blocks)} blocks)")
+        blocks_for_cluster = final_blocks
+
+    n_blocks_post_recursive = len(blocks_for_cluster)
+    pairs_post_recursive = candidate_pairs(blocks_for_cluster)
 
     t0 = time.time()
-    final_blocks = filter_top_k_smallest(final_blocks, k=top_k)
+    blocks_for_cluster = filter_top_k_smallest(blocks_for_cluster, k=top_k)
     t_filter = time.time() - t0
 
     t0 = time.time()
-    clusters = cluster_records(final_blocks, all_refIDs, tau=tau)
+    clusters = cluster_records(blocks_for_cluster, all_refIDs, tau=tau)
     t_cluster = time.time() - t0
+
+    final_blocks = blocks_for_cluster
 
     _, peak_mem = tracemalloc.get_traced_memory()
     tracemalloc.stop()
@@ -393,6 +421,9 @@ def _parse_args():
                    help="ARCS edge-weight threshold for clustering.")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
+    p.add_argument("--cluster-on", choices=["peak", "final"], default="peak",
+                   help="Which recursion snapshot feeds clustering: the "
+                        "peak-block-count state (default) or the final state.")
     return p.parse_args()
 
 
@@ -438,13 +469,15 @@ if __name__ == "__main__":
         ]
 
     results = [run_pipeline(initial_blocks, stop_k, all_refIDs, m, p,
-                            top_k=args.top_k, tau=args.tau)
+                            top_k=args.top_k, tau=args.tau,
+                            cluster_on=args.cluster_on)
                for (m, p) in configs]
 
     # Comparison table
     print("\n\n" + "=" * 110)
     print("ABLATION SUMMARY" if not single_run else "RUN SUMMARY")
-    print(f"stop_k={stop_k}, tau={args.tau}, top_k={args.top_k}")
+    print(f"stop_k={stop_k}, tau={args.tau}, top_k={args.top_k}, "
+          f"cluster_on={args.cluster_on}")
     print("=" * 110)
     headers = ["merge", "purge", "blks(rec)", "pairs(rec)", "blks(flt)",
                "pairs(flt)", "clusters", "multi", "single",
