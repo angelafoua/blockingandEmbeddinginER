@@ -4,6 +4,7 @@ Another change is that we will create combine the keys of blocks that have the s
 This is to reduce the number of blocks and increase the size of blocks. """
 
 
+import argparse
 import build_tokenFreqDict
 from refine_blocks import refine_blocks
 import ast
@@ -361,7 +362,29 @@ def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
     }
 
 
+def parse_args():
+    p = argparse.ArgumentParser(
+        description="Recursive blocking + ARCS clustering "
+                    "(with optional merge/purge ablation).")
+    p.add_argument("--tau", type=float, default=1.0,
+                   help="ARCS edge-weight threshold for clustering (default: 1.0)")
+    p.add_argument("--top-k", type=int, default=3, dest="top_k",
+                   help="Per-record top-k smallest blocks to keep (default: 3)")
+    p.add_argument("--baseline", action="store_true",
+                   help="Single run with merge=True, purge=True")
+    p.add_argument("--no-merge", action="store_true", dest="no_merge",
+                   help="Single run; disable merge_blocks")
+    p.add_argument("--no-purge", action="store_true", dest="no_purge",
+                   help="Single run; disable purge_subset_blocks")
+    args = p.parse_args()
+    if args.baseline and (args.no_merge or args.no_purge):
+        p.error("--baseline cannot be combined with --no-merge / --no-purge")
+    return args
+
+
 if __name__ == "__main__":
+    args = parse_args()
+
     print("Starting...")
     refDict = build_refDict.tokenizeInput("S12PX.txt")
     print(f"Loaded {len(refDict)} records")
@@ -385,14 +408,24 @@ if __name__ == "__main__":
 
     all_refIDs = list(refDict.keys())
 
-    # Ablation: run all four (merge x purge) combinations on the same input.
-    configs = [
-        (True,  True),   # V0 baseline
-        (True,  False),  # V1 no purge
-        (False, True),   # V2 no merge
-        (False, False),  # V3 neither
-    ]
-    results = [run_pipeline(initial_blocks, stop_k, all_refIDs, m, p)
+    # Single-run mode if any of --baseline / --no-merge / --no-purge given;
+    # otherwise full 4-way ablation on the same input.
+    single_mode = args.baseline or args.no_merge or args.no_purge
+    if single_mode:
+        do_merge = not args.no_merge
+        do_purge = not args.no_purge
+        configs = [(do_merge, do_purge)]
+    else:
+        configs = [
+            (True,  True),   # V0 baseline
+            (True,  False),  # V1 no purge
+            (False, True),   # V2 no merge
+            (False, False),  # V3 neither
+        ]
+    print(f"\nConfig: tau={args.tau}, top_k={args.top_k}, "
+          f"runs={len(configs)} ({'single' if single_mode else 'ablation'})")
+    results = [run_pipeline(initial_blocks, stop_k, all_refIDs, m, p,
+                            top_k=args.top_k, tau=args.tau)
                for (m, p) in configs]
 
     # Comparison table
