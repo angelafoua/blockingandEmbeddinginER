@@ -297,7 +297,7 @@ def blocking(refDict, tokenFreqDict):
 
 if __name__ == "__main__":
     print("Starting...")
-    refDict = build_refDict.tokenizeInput(r"C:\Users\ldfoua1\OneDrive - UA Little Rock\Documents\PhD\Blocking-only DWM\S12PX.txt")
+    refDict = build_refDict.tokenizeInput("S12PX.txt")
     print(f"Loaded {len(refDict)} records")
 
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
