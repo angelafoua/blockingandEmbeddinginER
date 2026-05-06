@@ -1,8 +1,20 @@
-"""This the same as algo1 but using deduplication after each recursive step. Also taken from alo2,
-we will change the way we find and use beta and stop the whole process.
-Another change is that we will create combine the keys of blocks that have the same reference IDs. 
-This is to reduce the number of blocks and increase the size of blocks. """
+"""Recursive blocking pipeline (algo1_2_v2).
 
+Refactor notes:
+- The legacy `stop_k` parameter conflated three independent knobs.
+  They are now split into `init_df_max` (upper-bound DF cap for
+  initial blocking tokens), `max_recursion_depth` (recursion ceiling),
+  and `min_intra_freq` (lower-bound floor used by `refine_blocks`).
+- The mode-of-record-length heuristic was replaced by a DF-percentile
+  cutoff (`compute_init_df_cap`), in the same space as the cap it
+  produces.
+- Block-construction filters (`min_blk_token_len`, `exclude_numeric`)
+  and the post-filter `min_block_size` are now CLI-tunable.
+- Diagnostic counters and histograms are emitted at each gate so the
+  effect of every parameter is observable.
+- `--stop-k` and `--stop-k-factor` remain accepted as deprecated
+  aliases.
+"""
 
 import build_tokenFreqDict
 from refine_blocks import refine_blocks
@@ -10,47 +22,89 @@ import ast
 from pathlib import Path
 import build_refDict
 
+
 def load_dict(path_str):
     path = Path(path_str)
     with open(path, "r", encoding="utf-8") as f:
         return ast.literal_eval(f.read())
 
-from statistics import mean
-from scipy.stats import mode
+
+from statistics import mean, mode
 from math import floor
 import time
 
+
 def compute_stop_k(refDict, factor=0.6):
+    """Legacy heuristic: floor(factor * mode(record vocab size)).
+
+    Retained for diagnostic comparison only; not used as the primary
+    parameter source. The mode is unstable on integer-valued data and
+    lives in record-length space, not in DF space.
+    """
     token_lengths = [len(set(tokens)) for tokens in refDict.values()]
-    mode_length = mode(token_lengths, keepdims=True)[0][0]
+    mode_length = mode(token_lengths)
     stop_k = floor(factor * mode_length)
-    print("Mode token length:", mode_length)
-    print(f"Stopping threshold k: {stop_k} (factor={factor})")
+    print(f"[legacy] Mode token length: {mode_length}")
+    print(f"[legacy] stop_k = floor({factor} * {mode_length}) = {stop_k}")
     return stop_k
 
-def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True, peak=None):
-    print(f"\n--- Beta = {beta}, Stop_k = {stop_k} "
-          f"(do_merge={do_merge}, do_purge={do_purge}) ---")
+
+def compute_init_df_cap(tokenFreqDict, percentile=0.95):
+    """DF cap for initial blocking tokens.
+
+    Operates directly on the document-frequency distribution, so it
+    scales with corpus size and is robust to integer-mode instability.
+    Returns the DF value at the given percentile of the sorted DF list,
+    i.e. tokens with `freq <= cap` survive the upper-bound check.
+    """
+    if not tokenFreqDict:
+        return 0
+    freqs = sorted(tokenFreqDict.values())
+    idx = min(int(len(freqs) * percentile), len(freqs) - 1)
+    return freqs[idx]
+
+
+def _percentiles(values, qs=(0.5, 0.9, 0.95, 0.99)):
+    if not values:
+        return {q: 0 for q in qs}
+    s = sorted(values)
+    n = len(s)
+    return {q: s[min(int(q * n), n - 1)] for q in qs}
+
+
+def recursive_blocking(depth, blocks, max_depth, min_intra_freq,
+                       do_merge=True, do_purge=True, peak=None):
+    """Recursive refinement loop.
+
+    `depth` starts at 1 and increments. Each iteration calls
+    `refine_blocks` with `max(depth, min_intra_freq)` so the
+    intra-block frequency floor grows with depth but never drops
+    below the configured floor.
+    """
+    effective_floor = max(depth, min_intra_freq)
+    print(f"\n--- depth={depth}, effective min_intra_freq={effective_floor}, "
+          f"max_depth={max_depth} (do_merge={do_merge}, do_purge={do_purge}) ---")
     print(f"Current number of blocks: {len(blocks)}")
 
-    # Record the entry-state snapshot (covers the initial-blocks case at beta=1).
+    # Record the entry-state snapshot (covers the initial-blocks case at depth=1).
     if peak is not None and len(blocks) > peak["size"]:
         peak["size"] = len(blocks)
         peak["blocks"] = blocks
-        peak["beta"] = beta - 1
+        peak["depth"] = depth - 1
 
-    if beta > stop_k:
-        print("Stopping: beta > stop_k")
+    if depth > max_depth:
+        print("Stopping: depth > max_recursion_depth")
         return blocks
 
-    print(f"Calling refine_blocks with beta={beta}...")
+    print(f"Calling refine_blocks with min_intra_freq={effective_floor}...")
     start_time = time.time()
-    newBlocks = refine_blocks(blocks, beta)
+    newBlocks = refine_blocks(blocks, effective_floor)
     refine_time = time.time() - start_time
-    print(f"refine_blocks took {refine_time:.2f} seconds, produced {len(newBlocks) if newBlocks else 0} blocks")
+    print(f"refine_blocks took {refine_time:.2f} seconds, produced "
+          f"{len(newBlocks) if newBlocks else 0} blocks")
 
     if not newBlocks:
-        print("Stopping: newBlocks is empty")
+        print("Stopping: newBlocks is empty (refine produced nothing)")
         return blocks
 
     if do_merge:
@@ -58,7 +112,8 @@ def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True, peak=
         start_time = time.time()
         merged_blocks = merge_blocks(blocks, newBlocks)
         merge_time = time.time() - start_time
-        print(f"merge_blocks took {merge_time:.2f} seconds, result: {len(merged_blocks)} blocks")
+        print(f"merge_blocks took {merge_time:.2f} seconds, "
+              f"result: {len(merged_blocks)} blocks")
     else:
         # Naive union: keep both, last-write-wins on key collision (no ref-set dedup)
         print(f"Skipping merge_blocks (do_merge=False); naive concat...")
@@ -72,69 +127,58 @@ def recursive_blocking(beta, blocks, stop_k, do_merge=True, do_purge=True, peak=
         merged_blocks = purge_subset_blocks(merged_blocks)
         purge_time = time.time() - start_time
         print(f"purge_subset_blocks took {purge_time:.2f} seconds, "
-              f"dropped {before - len(merged_blocks)}, result: {len(merged_blocks)} blocks")
+              f"dropped {before - len(merged_blocks)}, "
+              f"result: {len(merged_blocks)} blocks")
     else:
         print(f"Skipping purge_subset_blocks (do_purge=False)")
 
     if peak is not None and len(merged_blocks) > peak["size"]:
         peak["size"] = len(merged_blocks)
         peak["blocks"] = merged_blocks
-        peak["beta"] = beta
+        peak["depth"] = depth
 
-    return recursive_blocking(beta + 1, merged_blocks, stop_k,
-                              do_merge=do_merge, do_purge=do_purge, peak=peak)
+    return recursive_blocking(depth + 1, merged_blocks, max_depth,
+                              min_intra_freq,
+                              do_merge=do_merge, do_purge=do_purge,
+                              peak=peak)
+
 
 def merge_blocks(old_blocks, new_blocks):
-    """Optimized merge using a single pass with hash-based deduplication"""
-    ref_set_to_data = {}  # Maps frozenset of refs -> (list of keys, refs dict)
-    
-    # Combine both dictionaries
+    """Optimized merge using a single pass with hash-based deduplication."""
+    ref_set_to_data = {}
+
     combined = {**old_blocks, **new_blocks}
-    
-    # Single pass: group by reference set
+
     for key, refs in combined.items():
         ref_set = frozenset(refs.keys())
-        
-        # Normalize key to ensure it's hashable
+
         if isinstance(key, tuple):
             key_tuple = key
         else:
             key_tuple = (key,)
-        
+
         if ref_set not in ref_set_to_data:
-            # First occurrence of this reference set
             ref_set_to_data[ref_set] = (list(key_tuple), refs)
         else:
-            # Add new keys to existing list (will dedupe later)
             existing_keys, _ = ref_set_to_data[ref_set]
             existing_keys.extend(key_tuple)
-    
-    # Build final merged dictionary
+
     merged = {}
     for ref_set, (key_list, refs) in ref_set_to_data.items():
-        # Deduplicate keys using set (fast) then convert back to list
-        unique_keys = list(dict.fromkeys(key_list))  # Preserves order, removes dupes
-        
-        # Create final key
+        unique_keys = list(dict.fromkeys(key_list))
+
         if len(unique_keys) == 1:
             final_key = unique_keys[0]
         else:
             final_key = tuple(unique_keys)
-        
+
         merged[final_key] = refs
-    
+
     return merged
 
-def purge_subset_blocks(blocks):
-    """Lossless subset purging: drop block B if its reference set is a strict
-    subset of some other block A's reference set. Every pair generated by B is
-    then still generated by A, so no candidate pairs are lost.
 
-    Uses an inverted refID -> set(block_keys) index. For each block, the
-    intersection of indexes over its refIDs gives all blocks that contain ALL
-    of its refs (i.e. supersets, including itself). If any other block remains,
-    the current block is redundant.
-    """
+def purge_subset_blocks(blocks):
+    """Lossless subset purging."""
     from collections import defaultdict
 
     block_keys = list(blocks.keys())
@@ -177,11 +221,7 @@ def purge_subset_blocks(blocks):
 
 
 def remove_high_frequency_tokens(refDict, tokenFreqDict, max_frequency=60):
-    """Drop tokens whose document frequency exceeds max_frequency.
-    These act as stop-words: they appear in too many records to discriminate
-    entities (e.g. state codes, generic address terms) and would inflate
-    every block. Returns (cleanedRefDict, removedTokenSet).
-    """
+    """Drop tokens whose document frequency exceeds max_frequency."""
     noisy = {t for t, f in tokenFreqDict.items() if f > max_frequency}
     cleaned = {refID: [t for t in tokens if t not in noisy]
                for refID, tokens in refDict.items()}
@@ -189,15 +229,7 @@ def remove_high_frequency_tokens(refDict, tokenFreqDict, max_frequency=60):
 
 
 def filter_top_k_smallest(blocks, k=3, min_block_size=2):
-    """Per-record top-k smallest filter (Block Filtering, Papadakis et al.).
-
-    For each record, keep its membership only in the k smallest blocks it
-    belongs to. Drop the rest. Then drop any block that ends up with
-    fewer than min_block_size records (singletons aren't useful for ER).
-
-    This reduces per-record overlap and the total candidate-pair count
-    while keeping each record in its highest-precision blocks.
-    """
+    """Per-record top-k smallest filter (Block Filtering, Papadakis et al.)."""
     from collections import defaultdict
 
     record_to_blocks = defaultdict(list)
@@ -228,7 +260,7 @@ class UnionFind:
 
     def find(self, x):
         while self.parent[x] != x:
-            self.parent[x] = self.parent[self.parent[x]]  # path compression
+            self.parent[x] = self.parent[self.parent[x]]
             x = self.parent[x]
         return x
 
@@ -251,14 +283,7 @@ class UnionFind:
 
 
 def build_arcs_graph(blocks):
-    """Build a weighted graph using ARCS scoring.
-
-    For each block of size s, every pair (A, B) in it gets 1/s added to its
-    edge weight. This rewards co-occurrence in small (specific) blocks more
-    than in large (generic) ones.
-
-    Returns {(refID_a, refID_b): weight} with refID_a < refID_b.
-    """
+    """Build a weighted graph using ARCS scoring."""
     from collections import defaultdict
     edge_weights = defaultdict(float)
 
@@ -278,12 +303,36 @@ def build_arcs_graph(blocks):
     return edge_weights
 
 
+def _print_edge_histogram(edge_weights, n_buckets=10):
+    if not edge_weights:
+        print("  (no edges to histogram)")
+        return
+    weights = list(edge_weights.values())
+    lo, hi = min(weights), max(weights)
+    if lo == hi:
+        print(f"  All {len(weights)} edges have weight {lo:.4f}")
+        return
+    width = (hi - lo) / n_buckets
+    counts = [0] * n_buckets
+    for w in weights:
+        idx = min(int((w - lo) / width), n_buckets - 1)
+        counts[idx] += 1
+    print(f"  ARCS edge-weight histogram ({len(weights)} edges, "
+          f"range [{lo:.4f}, {hi:.4f}]):")
+    for i, c in enumerate(counts):
+        bucket_lo = lo + i * width
+        bucket_hi = bucket_lo + width
+        print(f"    [{bucket_lo:.4f}, {bucket_hi:.4f}): {c}")
+
+
 def cluster_records(blocks, all_refIDs, tau=1.0):
     """Build ARCS graph, prune edges below tau, return clusters via Union-Find."""
     print("\nBuilding ARCS weighted graph...")
     start = time.time()
     edge_weights = build_arcs_graph(blocks)
     print(f"  Graph built in {time.time() - start:.2f}s — {len(edge_weights)} edges")
+
+    _print_edge_histogram(edge_weights)
 
     uf = UnionFind(all_refIDs)
     kept = 0
@@ -300,45 +349,66 @@ def cluster_records(blocks, all_refIDs, tau=1.0):
     return clusters
 
 
-def blocking(refDict, tokenFreqDict, beta,
-             minBlkTokenLen=4, excludeNumericBlocks=True):
-    """Select blocking tokens the way DWM42_BuildBlockPairs does:
-    len(token) >= minBlkTokenLen, not pure-digit (when excluded),
-    and 2 <= freq <= beta. `beta` is the upper-frequency bound
-    (== stop_k in this pipeline)."""
+def blocking(refDict, tokenFreqDict, init_df_max,
+             min_blk_token_len=4, exclude_numeric_blocks=True):
+    """Select blocking tokens.
+
+    Keeps token `t` as a blocking key for record `r` iff:
+      - len(t) >= min_blk_token_len
+      - t is not pure-digit (when exclude_numeric_blocks is True)
+      - 2 <= tokenFreqDict[t] <= init_df_max
+    """
     from collections import defaultdict
     blocks = defaultdict(dict)
-    print(f"Blocking filters: minBlkTokenLen={minBlkTokenLen}, "
-          f"excludeNumericBlocks={excludeNumericBlocks}, "
-          f"freq window=[2, {beta}]")
+    print(f"Blocking filters: min_blk_token_len={min_blk_token_len}, "
+          f"exclude_numeric_blocks={exclude_numeric_blocks}, "
+          f"freq window=[2, {init_df_max}]")
+
+    n_too_short = 0
+    n_numeric = 0
+    n_freq_too_low = 0
+    n_freq_too_high = 0
+    n_kept = 0
 
     for key, tokenList in refDict.items():
         tokenSet = set(tokenList)
         for token in tokenSet:
-            if len(token) < minBlkTokenLen:
+            if len(token) < min_blk_token_len:
+                n_too_short += 1
                 continue
-            if excludeNumericBlocks and token.isdigit():
+            if exclude_numeric_blocks and token.isdigit():
+                n_numeric += 1
                 continue
             freq = tokenFreqDict[token]
-            if freq < 2 or freq > beta:
+            if freq < 2:
+                n_freq_too_low += 1
+                continue
+            if freq > init_df_max:
+                n_freq_too_high += 1
                 continue
             blocks[token][key] = tokenSet
+            n_kept += 1
+
+    print(f"Blocking gate counters (per-record token instances):")
+    print(f"  too_short (< {min_blk_token_len}): {n_too_short}")
+    print(f"  numeric (excluded):                {n_numeric}")
+    print(f"  freq < 2:                          {n_freq_too_low}")
+    print(f"  freq > {init_df_max}:                       {n_freq_too_high}")
+    print(f"  kept (became block memberships):   {n_kept}")
+    print(f"  unique blocking keys produced:     {len(blocks)}")
 
     return blocks
+
 
 def candidate_pairs(blocks):
     """Total number of intra-block pairs across all blocks (with multiplicity)."""
     return sum((len(refs) * (len(refs) - 1)) // 2 for refs in blocks.values())
 
 
-def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
-                 top_k=3, tau=1.0, cluster_on="peak"):
-    """Run recursive blocking + filter + clustering with given ablation flags.
-    `cluster_on` selects which recursion snapshot feeds the filter+clustering:
-      - "peak": the highest-block-count state observed during recursion
-      - "final": the state at the end of recursion (legacy behavior)
-    Returns a metrics dict.
-    """
+def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
+                 all_refIDs, do_merge, do_purge,
+                 top_k=3, tau=1.0, min_block_size=2, cluster_on="final"):
+    """Run recursive blocking + filter + clustering with given ablation flags."""
     import copy, tracemalloc
 
     label = f"merge={do_merge}, purge={do_purge}"
@@ -348,14 +418,15 @@ def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
 
     tracemalloc.start()
     t0 = time.time()
-    peak = {"blocks": blocks_in, "size": len(blocks_in), "beta": 0}
-    final_blocks = recursive_blocking(1, blocks_in, stop_k,
+    peak = {"blocks": blocks_in, "size": len(blocks_in), "depth": 0}
+    final_blocks = recursive_blocking(1, blocks_in, max_recursion_depth,
+                                      min_intra_freq,
                                       do_merge=do_merge, do_purge=do_purge,
                                       peak=peak)
     t_recursive = time.time() - t0
 
     print(f"\nPeak block count during recursion: {peak['size']} "
-          f"(at beta={peak['beta']})")
+          f"(at depth={peak['depth']})")
 
     if cluster_on == "peak":
         print(f"Clustering on PEAK snapshot ({peak['size']} blocks)")
@@ -368,7 +439,8 @@ def run_pipeline(initial_blocks, stop_k, all_refIDs, do_merge, do_purge,
     pairs_post_recursive = candidate_pairs(blocks_for_cluster)
 
     t0 = time.time()
-    blocks_for_cluster = filter_top_k_smallest(blocks_for_cluster, k=top_k)
+    blocks_for_cluster = filter_top_k_smallest(blocks_for_cluster, k=top_k,
+                                               min_block_size=min_block_size)
     t_filter = time.time() - t0
 
     t0 = time.time()
@@ -408,11 +480,39 @@ def _parse_args():
     p.add_argument("--input", default="S12PX.txt",
                    help="Input file for build_refDict.tokenizeInput.")
     p.add_argument("--max-freq", type=int, default=60,
-                   help="Drop tokens with document frequency > this value.")
+                   help="Drop tokens with document frequency > this value "
+                        "(stop-word pre-filter, applied to refDict).")
+
+    # New, role-separated parameters.
+    p.add_argument("--init-df-max", type=int, default=None,
+                   help="Upper-bound DF cap for initial blocking tokens. "
+                        "If unset, derived from --init-df-percentile.")
+    p.add_argument("--init-df-percentile", type=float, default=0.95,
+                   help="Percentile of tokenFreqDict used to derive "
+                        "init_df_max when --init-df-max is unset.")
+    p.add_argument("--max-recursion-depth", type=int, default=5,
+                   help="Maximum number of recursion levels.")
+    p.add_argument("--min-intra-freq", type=int, default=2,
+                   help="Lower-bound floor on intra-block token frequency "
+                        "passed to refine_blocks. Effective floor at depth d "
+                        "is max(d, this).")
+    p.add_argument("--min-blk-token-len", type=int, default=4,
+                   help="Minimum length of a token to qualify as a blocking key.")
+    p.add_argument("--include-numeric", action="store_true",
+                   help="Include pure-digit tokens as blocking keys "
+                        "(default: excluded).")
+    p.add_argument("--min-block-size", type=int, default=2,
+                   help="Drop blocks smaller than this after top-k filtering.")
+
+    # Legacy / deprecated.
     p.add_argument("--stop-k", type=int, default=None,
-                   help="Explicit stop_k (overrides --stop-k-factor).")
-    p.add_argument("--stop-k-factor", type=float, default=0.6,
-                   help="Multiplier of modal record length when --stop-k is unset.")
+                   help="[DEPRECATED] Legacy combined parameter. Sets "
+                        "init_df_max, max_recursion_depth, and (implicitly) "
+                        "min_intra_freq=2 all at once.")
+    p.add_argument("--stop-k-factor", type=float, default=None,
+                   help="[DEPRECATED] Computes K = floor(F * mode(record "
+                        "vocab size)) and applies as --stop-k=K.")
+
     p.add_argument("--no-merge", action="store_true",
                    help="Disable merge_blocks; triggers single-config run.")
     p.add_argument("--no-purge", action="store_true",
@@ -421,10 +521,44 @@ def _parse_args():
                    help="ARCS edge-weight threshold for clustering.")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
-    p.add_argument("--cluster-on", choices=["peak", "final"], default="peak",
+    p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
                    help="Which recursion snapshot feeds clustering: the "
-                        "peak-block-count state (default) or the final state.")
+                        "final state (default) or the peak-block-count state.")
     return p.parse_args()
+
+
+def _resolve_legacy_args(args, refDict, tokenFreqDict):
+    """Map deprecated --stop-k / --stop-k-factor onto the new params.
+
+    Returns (init_df_max, max_recursion_depth, min_intra_freq) with
+    legacy overrides applied if present.
+    """
+    legacy_k = None
+    if args.stop_k_factor is not None:
+        print(f"\n[DEPRECATED] --stop-k-factor={args.stop_k_factor} given. "
+              f"Computing legacy K = floor(factor * mode(record vocab size)).")
+        legacy_k = compute_stop_k(refDict, factor=args.stop_k_factor)
+    if args.stop_k is not None:
+        print(f"\n[DEPRECATED] --stop-k={args.stop_k} given; overrides factor.")
+        legacy_k = args.stop_k
+
+    if legacy_k is not None:
+        print(f"[DEPRECATED] Mapping legacy K={legacy_k} -> "
+              f"init_df_max={legacy_k}, max_recursion_depth={legacy_k}, "
+              f"min_intra_freq=2.")
+        return legacy_k, legacy_k, 2
+
+    # New path.
+    if args.init_df_max is not None:
+        init_df_max = args.init_df_max
+        print(f"init_df_max set explicitly: {init_df_max}")
+    else:
+        init_df_max = compute_init_df_cap(tokenFreqDict,
+                                          percentile=args.init_df_percentile)
+        print(f"init_df_max derived from percentile "
+              f"{args.init_df_percentile}: {init_df_max}")
+
+    return init_df_max, args.max_recursion_depth, args.min_intra_freq
 
 
 if __name__ == "__main__":
@@ -444,14 +578,42 @@ if __name__ == "__main__":
     tokenFreqDict = build_tokenFreqDict.buildTokenFreqDict(refDict)
     print(f"Rebuilt token frequency dict: {len(tokenFreqDict)} unique tokens remain")
 
-    if args.stop_k is not None:
-        stop_k = args.stop_k
-        print(f"Stopping threshold k: {stop_k} (explicit override)")
-    else:
-        stop_k = compute_stop_k(refDict, factor=args.stop_k_factor)
+    # Diagnostics: where does the chosen DF cap sit relative to the corpus?
+    df_pct = _percentiles(list(tokenFreqDict.values()))
+    rec_lens = [len(set(t)) for t in refDict.values()]
+    rl_pct = _percentiles(rec_lens)
+    print("\nDF distribution percentiles (post-cleanup):")
+    print(f"  p50={df_pct[0.5]}, p90={df_pct[0.9]}, "
+          f"p95={df_pct[0.95]}, p99={df_pct[0.99]}")
+    print("Record-length percentiles (distinct tokens, post-cleanup):")
+    print(f"  p50={rl_pct[0.5]}, p90={rl_pct[0.9]}, "
+          f"p95={rl_pct[0.95]}, p99={rl_pct[0.99]}")
+
+    init_df_max, max_recursion_depth, min_intra_freq = _resolve_legacy_args(
+        args, refDict, tokenFreqDict)
+
+    # For comparison logging only, also show the legacy heuristic's value.
+    legacy_diag = compute_stop_k(refDict, factor=0.6)
+    print(f"[diagnostic] Legacy heuristic stop_k(factor=0.6) = {legacy_diag} "
+          f"(not used unless --stop-k* given)")
+
+    print(f"\nResolved parameters:")
+    print(f"  init_df_max         = {init_df_max}")
+    print(f"  max_recursion_depth = {max_recursion_depth}")
+    print(f"  min_intra_freq      = {min_intra_freq}")
+    print(f"  min_blk_token_len   = {args.min_blk_token_len}")
+    print(f"  exclude_numeric     = {not args.include_numeric}")
+    print(f"  min_block_size      = {args.min_block_size}")
+    print(f"  top_k               = {args.top_k}")
+    print(f"  tau                 = {args.tau}")
+    print(f"  cluster_on          = {args.cluster_on}")
 
     print("\nCreating initial blocks...")
-    initial_blocks = blocking(refDict, tokenFreqDict, beta=stop_k)
+    initial_blocks = blocking(
+        refDict, tokenFreqDict, init_df_max=init_df_max,
+        min_blk_token_len=args.min_blk_token_len,
+        exclude_numeric_blocks=not args.include_numeric,
+    )
     print(f"Initial blocks created: {len(initial_blocks)}")
 
     all_refIDs = list(refDict.keys())
@@ -460,7 +622,6 @@ if __name__ == "__main__":
     if single_run:
         configs = [(not args.no_merge, not args.no_purge)]
     else:
-        # Default: run all four (merge x purge) combinations on the same input.
         configs = [
             (True,  True),   # V0 baseline
             (True,  False),  # V1 no purge
@@ -468,15 +629,18 @@ if __name__ == "__main__":
             (False, False),  # V3 neither
         ]
 
-    results = [run_pipeline(initial_blocks, stop_k, all_refIDs, m, p,
+    results = [run_pipeline(initial_blocks, max_recursion_depth,
+                            min_intra_freq, all_refIDs, m, p,
                             top_k=args.top_k, tau=args.tau,
+                            min_block_size=args.min_block_size,
                             cluster_on=args.cluster_on)
                for (m, p) in configs]
 
-    # Comparison table
     print("\n\n" + "=" * 110)
     print("ABLATION SUMMARY" if not single_run else "RUN SUMMARY")
-    print(f"stop_k={stop_k}, tau={args.tau}, top_k={args.top_k}, "
+    print(f"init_df_max={init_df_max}, max_recursion_depth={max_recursion_depth}, "
+          f"min_intra_freq={min_intra_freq}, tau={args.tau}, "
+          f"top_k={args.top_k}, min_block_size={args.min_block_size}, "
           f"cluster_on={args.cluster_on}")
     print("=" * 110)
     headers = ["merge", "purge", "blks(rec)", "pairs(rec)", "blks(flt)",
