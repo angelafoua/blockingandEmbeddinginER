@@ -283,7 +283,8 @@ class UnionFind:
         return list(clusters.values())
 
 
-def build_arcs_graph(blocks, weighting="uniform", corpus_size=None):
+def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
+                     max_block_pair_cost=None):
     """Build a weighted graph using ARCS scoring.
 
     For each block of size s containing N_corpus total records, every
@@ -297,16 +298,29 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None):
     its inverse-document-frequency. Specific blocks (small s) dominate;
     generic blocks (large s) become near-zero.
 
+    `max_block_pair_cost` is a compute guardrail used in
+    redundancy-positive (full) blocking: any block whose pair count
+    s*(s-1)/2 exceeds the cap is skipped. Its per-pair contribution
+    would be ≤ 1/s anyway, near zero for large s.
+
     Returns {(refID_a, refID_b): weight} with refID_a < refID_b.
     """
     import math
     from collections import defaultdict
     edge_weights = defaultdict(float)
 
+    n_skipped_too_big = 0
+    pairs_skipped = 0
+
     for refs in blocks.values():
         ref_list = list(refs.keys())
         block_size = len(ref_list)
         if block_size < 2:
+            continue
+        n_pairs = block_size * (block_size - 1) // 2
+        if max_block_pair_cost is not None and n_pairs > max_block_pair_cost:
+            n_skipped_too_big += 1
+            pairs_skipped += n_pairs
             continue
         if weighting == "idf":
             if corpus_size is None or corpus_size <= block_size:
@@ -323,6 +337,11 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None):
                 if a > b:
                     a, b = b, a
                 edge_weights[(a, b)] += contribution
+
+    if max_block_pair_cost is not None and n_skipped_too_big > 0:
+        print(f"  [pair-cost guardrail] skipped {n_skipped_too_big} blocks "
+              f"with >{max_block_pair_cost} pairs each "
+              f"(total {pairs_skipped:,} pairs avoided)")
 
     return edge_weights
 
@@ -414,7 +433,8 @@ def _split_cluster_by_density(cluster, internal_edges,
 
 
 def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform",
-                    density_floor=0.0, density_min_size=3):
+                    density_floor=0.0, density_min_size=3,
+                    max_block_pair_cost=None):
     """Build ARCS graph, prune edges below tau, return clusters via Union-Find.
     If `density_floor > 0`, post-process clusters by splitting any whose
     internal edge density falls below the floor (helps resist
@@ -423,7 +443,8 @@ def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform",
     print(f"\nBuilding ARCS weighted graph (weighting={weighting})...")
     start = time.time()
     edge_weights = build_arcs_graph(blocks, weighting=weighting,
-                                    corpus_size=len(all_refIDs))
+                                    corpus_size=len(all_refIDs),
+                                    max_block_pair_cost=max_block_pair_cost)
     print(f"  Graph built in {time.time() - start:.2f}s — {len(edge_weights)} edges")
 
     _print_edge_histogram(edge_weights)
@@ -476,19 +497,32 @@ def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform",
 
 
 def blocking(refDict, tokenFreqDict, init_df_max,
-             min_blk_token_len=4, exclude_numeric_blocks=True):
+             min_blk_token_len=4, exclude_numeric_blocks=True,
+             full_blocking=False):
     """Select blocking tokens.
 
-    Keeps token `t` as a blocking key for record `r` iff:
+    Default mode keeps token `t` as a blocking key for record `r` iff:
       - len(t) >= min_blk_token_len
       - t is not pure-digit (when exclude_numeric_blocks is True)
       - 2 <= tokenFreqDict[t] <= init_df_max
+
+    With `full_blocking=True`, the redundancy-positive (Papadakis) regime
+    applies: every token surviving stop-word removal becomes a block as
+    long as `tokenFreqDict[t] >= 2`. Length, numeric, and DF-cap filters
+    are bypassed; ARCS reciprocal weighting + the build_arcs_graph
+    pair-cost guardrail handle giant blocks downstream.
     """
     from collections import defaultdict
     blocks = defaultdict(dict)
-    print(f"Blocking filters: min_blk_token_len={min_blk_token_len}, "
-          f"exclude_numeric_blocks={exclude_numeric_blocks}, "
-          f"freq window=[2, {init_df_max}]")
+
+    if full_blocking:
+        print("Blocking mode: FULL (Papadakis redundancy-positive). "
+              "Length / numeric / DF-cap filters are disabled; "
+              "only freq >= 2 enforced.")
+    else:
+        print(f"Blocking filters: min_blk_token_len={min_blk_token_len}, "
+              f"exclude_numeric_blocks={exclude_numeric_blocks}, "
+              f"freq window=[2, {init_df_max}]")
 
     n_too_short = 0
     n_numeric = 0
@@ -499,27 +533,30 @@ def blocking(refDict, tokenFreqDict, init_df_max,
     for key, tokenList in refDict.items():
         tokenSet = set(tokenList)
         for token in tokenSet:
-            if len(token) < min_blk_token_len:
-                n_too_short += 1
-                continue
-            if exclude_numeric_blocks and token.isdigit():
-                n_numeric += 1
-                continue
+            if not full_blocking:
+                if len(token) < min_blk_token_len:
+                    n_too_short += 1
+                    continue
+                if exclude_numeric_blocks and token.isdigit():
+                    n_numeric += 1
+                    continue
             freq = tokenFreqDict[token]
             if freq < 2:
                 n_freq_too_low += 1
                 continue
-            if freq > init_df_max:
+            if not full_blocking and freq > init_df_max:
                 n_freq_too_high += 1
                 continue
             blocks[token][key] = tokenSet
             n_kept += 1
 
     print(f"Blocking gate counters (per-record token instances):")
-    print(f"  too_short (< {min_blk_token_len}): {n_too_short}")
-    print(f"  numeric (excluded):                {n_numeric}")
+    if not full_blocking:
+        print(f"  too_short (< {min_blk_token_len}): {n_too_short}")
+        print(f"  numeric (excluded):                {n_numeric}")
     print(f"  freq < 2:                          {n_freq_too_low}")
-    print(f"  freq > {init_df_max}:                       {n_freq_too_high}")
+    if not full_blocking:
+        print(f"  freq > {init_df_max}:                       {n_freq_too_high}")
     print(f"  kept (became block memberships):   {n_kept}")
     print(f"  unique blocking keys produced:     {len(blocks)}")
 
@@ -754,7 +791,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  density_floor=0.0, density_min_size=3,
                  original_refDict=None, clusters_json_path=None,
                  single_run=False, include_singletons=True,
-                 truth_file_path=None, write_metrics=True):
+                 truth_file_path=None, write_metrics=True,
+                 max_block_pair_cost=None):
     """Run recursive blocking + filter + clustering with given ablation flags."""
     import copy, tracemalloc
 
@@ -794,7 +832,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
     clusters = cluster_records(blocks_for_cluster, all_refIDs, tau=tau,
                                weighting=arcs_weighting,
                                density_floor=density_floor,
-                               density_min_size=density_min_size)
+                               density_min_size=density_min_size,
+                               max_block_pair_cost=max_block_pair_cost)
     t_cluster = time.time() - t0
 
     final_blocks = blocks_for_cluster
@@ -886,7 +925,19 @@ def _parse_args():
                    help="Minimum length of a token to qualify as a blocking key.")
     p.add_argument("--include-numeric", action="store_true",
                    help="Include pure-digit tokens as blocking keys "
-                        "(default: excluded).")
+                        "(default: excluded). Ignored when --full-blocking "
+                        "is set (numerics are always included in that mode).")
+    p.add_argument("--full-blocking", action="store_true",
+                   help="Redundancy-positive (Papadakis) blocking mode: "
+                        "every token surviving stop-word removal becomes a "
+                        "block as long as its DF >= 2. Disables length, "
+                        "numeric, and DF-cap filters in blocking(). Pair with "
+                        "--max-block-pair-cost to cap compute on huge blocks.")
+    p.add_argument("--max-block-pair-cost", type=int, default=None,
+                   help="Compute guardrail for build_arcs_graph: skip any "
+                        "block whose pair count |B|*(|B|-1)/2 exceeds this "
+                        "value. Recommended ~100000 with --full-blocking. "
+                        "Skipped blocks contribute <= 1/|B| per pair anyway.")
     p.add_argument("--min-block-size", type=int, default=2,
                    help="Drop blocks smaller than this after top-k filtering.")
 
@@ -1042,6 +1093,7 @@ if __name__ == "__main__":
         refDict, tokenFreqDict, init_df_max=init_df_max,
         min_blk_token_len=args.min_blk_token_len,
         exclude_numeric_blocks=not args.include_numeric,
+        full_blocking=args.full_blocking,
     )
     print(f"Initial blocks created: {len(initial_blocks)}")
 
@@ -1097,7 +1149,8 @@ if __name__ == "__main__":
                             single_run=single_run,
                             include_singletons=not args.no_singletons_json,
                             truth_file_path=truth_file_path,
-                            write_metrics=not args.no_metrics)
+                            write_metrics=not args.no_metrics,
+                            max_block_pair_cost=args.max_block_pair_cost)
                for (m, p) in configs]
 
     print("\n\n" + "=" * 110)
