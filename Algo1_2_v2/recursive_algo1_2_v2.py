@@ -19,6 +19,7 @@ Refactor notes:
 import build_tokenFreqDict
 from refine_blocks import refine_blocks
 import ast
+import os
 from pathlib import Path
 import build_refDict
 
@@ -578,13 +579,182 @@ def _path_with_config_suffix(base_path, do_merge, do_purge):
     return p.with_name(p.stem + suffix + p.suffix)
 
 
+def _import_er_metrics():
+    """Import er_metrics from the repo root (one level above Algo1_2_v2/)."""
+    import sys
+    from pathlib import Path
+    try:
+        import er_metrics
+        return er_metrics
+    except ImportError:
+        parent = str(Path(__file__).resolve().parent.parent)
+        if parent not in sys.path:
+            sys.path.insert(0, parent)
+        import er_metrics
+        return er_metrics
+
+
+def compute_run_metrics(clusters, all_refIDs, truth_file_path=None,
+                        config=None, timings=None):
+    """Compute summary + (optional) ground-truth metrics for a clustering.
+
+    Returns a dict with: record counts, predicted-cluster size distribution,
+    and — if `truth_file_path` is provided — pair-based P/R/F1 plus the
+    truth-cluster size distribution and L1 distance between distributions.
+    """
+    from collections import Counter
+    import statistics
+
+    sizes = sorted([len(c) for c in clusters], reverse=True)
+    size_dist = dict(Counter(sizes))
+    metrics = {
+        "config": config or {},
+        "n_records_total": len(all_refIDs),
+        "n_unique_records": len(set(all_refIDs)),
+        "predicted_clusters": {
+            "n_total": len(clusters),
+            "n_multi": sum(1 for s in sizes if s > 1),
+            "n_singletons": sum(1 for s in sizes if s == 1),
+            "min_size": min(sizes) if sizes else 0,
+            "max_size": max(sizes) if sizes else 0,
+            "mean_size": round(statistics.mean(sizes), 3) if sizes else 0,
+            "median_size": statistics.median(sizes) if sizes else 0,
+            "size_distribution": {str(k): v for k, v in
+                                  sorted(size_dist.items())},
+        },
+    }
+
+    if truth_file_path:
+        er_metrics = _import_er_metrics()
+        truth = er_metrics.load_truth(truth_file_path)
+        all_set = set(all_refIDs)
+        truth_clusters = {}
+        for ref, tid in truth.items():
+            if ref in all_set:
+                truth_clusters.setdefault(tid, []).append(ref)
+        truth_sizes = sorted([len(v) for v in truth_clusters.values()],
+                             reverse=True)
+        truth_dist = dict(Counter(truth_sizes))
+
+        # Pair-based metrics: convert cluster list to {cid: [refIDs]}
+        cluster_blocks = {i: c for i, c in enumerate(clusters)}
+        pair = er_metrics.compute_metrics(cluster_blocks, truth_file_path,
+                                          verbose=False)
+
+        all_sizes = set(size_dist) | set(truth_dist)
+        l1 = sum(abs(size_dist.get(s, 0) - truth_dist.get(s, 0))
+                 for s in all_sizes)
+
+        metrics["truth_clusters"] = {
+            "truth_file": truth_file_path,
+            "n_total": len(truth_clusters),
+            "min_size": min(truth_sizes) if truth_sizes else 0,
+            "max_size": max(truth_sizes) if truth_sizes else 0,
+            "mean_size": round(statistics.mean(truth_sizes), 3)
+                         if truth_sizes else 0,
+            "median_size": statistics.median(truth_sizes)
+                           if truth_sizes else 0,
+            "size_distribution": {str(k): v for k, v in
+                                  sorted(truth_dist.items())},
+        }
+        metrics["pair_metrics"] = pair
+        metrics["size_distribution_l1"] = l1
+        metrics["cluster_count_diff"] = len(clusters) - len(truth_clusters)
+
+    if timings:
+        metrics["timings_seconds"] = {k: round(v, 3) for k, v in timings.items()}
+
+    return metrics
+
+
+def write_metrics_files(metrics, clusters_out_path):
+    """Write structured `.metrics.json` and human-readable `.metrics.log`
+    next to the clusters JSON."""
+    import json
+    from pathlib import Path
+
+    base = Path(clusters_out_path)
+    json_path = base.with_name(base.stem + ".metrics.json")
+    log_path = base.with_name(base.stem + ".metrics.log")
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(metrics, f, ensure_ascii=False, indent=2)
+
+    lines = []
+    lines.append("=" * 72)
+    lines.append("  RUN METRICS")
+    lines.append("=" * 72)
+
+    cfg = metrics.get("config", {})
+    if cfg:
+        lines.append("\n[Configuration]")
+        for k, v in cfg.items():
+            lines.append(f"  {k:<24} = {v}")
+
+    lines.append("\n[Records]")
+    lines.append(f"  total                    = {metrics['n_records_total']}")
+    lines.append(f"  unique                   = {metrics['n_unique_records']}")
+
+    pc = metrics["predicted_clusters"]
+    lines.append("\n[Predicted Clusters]")
+    lines.append(f"  total                    = {pc['n_total']}")
+    lines.append(f"  multi-record             = {pc['n_multi']}")
+    lines.append(f"  singletons               = {pc['n_singletons']}")
+    lines.append(f"  size  min / max          = {pc['min_size']} / {pc['max_size']}")
+    lines.append(f"  size  mean / median      = {pc['mean_size']} / {pc['median_size']}")
+    lines.append("  size distribution (size: count):")
+    for s, n in sorted(pc["size_distribution"].items(), key=lambda x: int(x[0])):
+        lines.append(f"    size {int(s):>3} : {n}")
+
+    if "truth_clusters" in metrics:
+        tc = metrics["truth_clusters"]
+        lines.append(f"\n[Truth Clusters]  ({tc['truth_file']})")
+        lines.append(f"  total                    = {tc['n_total']}")
+        lines.append(f"  size  min / max          = {tc['min_size']} / {tc['max_size']}")
+        lines.append(f"  size  mean / median      = {tc['mean_size']} / {tc['median_size']}")
+        lines.append("  size distribution (size: count):")
+        for s, n in sorted(tc["size_distribution"].items(),
+                           key=lambda x: int(x[0])):
+            lines.append(f"    size {int(s):>3} : {n}")
+
+        lines.append("\n[Distribution Match]")
+        lines.append(f"  cluster count diff       = {metrics['cluster_count_diff']}  "
+                     f"(predicted - truth)")
+        lines.append(f"  size-distribution L1     = {metrics['size_distribution_l1']}")
+
+        p = metrics["pair_metrics"]
+        lines.append("\n[Pair-based Metrics]")
+        lines.append(f"  TP                       = {p['TP']}")
+        lines.append(f"  FP                       = {p['FP']}")
+        lines.append(f"  FN                       = {p['FN']}")
+        lines.append(f"  Linked Pairs (L)         = {p['L']}")
+        lines.append(f"  Expected Pairs (E)       = {p['E']}")
+        lines.append(f"  Precision                = {p['precision']}")
+        lines.append(f"  Recall                   = {p['recall']}")
+        lines.append(f"  F1                       = {p['f1']}")
+
+    if "timings_seconds" in metrics:
+        lines.append("\n[Timings (seconds)]")
+        for k, v in metrics["timings_seconds"].items():
+            lines.append(f"  {k:<24} = {v}")
+
+    lines.append("\n" + "=" * 72)
+
+    with open(log_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+    print(f"  Wrote metrics JSON to {json_path}")
+    print(f"  Wrote metrics log  to {log_path}")
+
+
 def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  all_refIDs, do_merge, do_purge,
                  top_k=3, tau=1.0, min_block_size=2, cluster_on="final",
                  arcs_weighting="uniform",
                  density_floor=0.0, density_min_size=3,
                  original_refDict=None, clusters_json_path=None,
-                 single_run=False, include_singletons=True):
+                 single_run=False, include_singletons=True,
+                 truth_file_path=None, write_metrics=True):
     """Run recursive blocking + filter + clustering with given ablation flags."""
     import copy, tracemalloc
 
@@ -629,26 +799,41 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
 
     final_blocks = blocks_for_cluster
 
+    meta = {
+        "do_merge": do_merge,
+        "do_purge": do_purge,
+        "max_recursion_depth": max_recursion_depth,
+        "min_intra_freq": min_intra_freq,
+        "top_k": top_k,
+        "tau": tau,
+        "min_block_size": min_block_size,
+        "cluster_on": cluster_on,
+        "arcs_weighting": arcs_weighting,
+        "density_floor": density_floor,
+        "density_min_size": density_min_size,
+    }
+
+    out_path = None
     if clusters_json_path is not None and original_refDict is not None:
         out_path = (clusters_json_path if single_run
                     else _path_with_config_suffix(clusters_json_path,
                                                   do_merge, do_purge))
-        meta = {
-            "do_merge": do_merge,
-            "do_purge": do_purge,
-            "max_recursion_depth": max_recursion_depth,
-            "min_intra_freq": min_intra_freq,
-            "top_k": top_k,
-            "tau": tau,
-            "min_block_size": min_block_size,
-            "cluster_on": cluster_on,
-            "arcs_weighting": arcs_weighting,
-            "density_floor": density_floor,
-            "density_min_size": density_min_size,
-        }
         dump_clusters_json(clusters, original_refDict, out_path,
                            include_singletons=include_singletons,
                            metadata=meta)
+
+    if write_metrics and out_path is not None:
+        timings = {
+            "recursive": t_recursive,
+            "filter": t_filter,
+            "cluster": t_cluster,
+        }
+        run_metrics = compute_run_metrics(
+            clusters, all_refIDs,
+            truth_file_path=truth_file_path,
+            config=meta, timings=timings,
+        )
+        write_metrics_files(run_metrics, out_path)
 
     _, peak_mem = tracemalloc.get_traced_memory()
     tracemalloc.stop()
@@ -752,6 +937,15 @@ def _parse_args():
                         "Set to empty string to disable.")
     p.add_argument("--no-singletons-json", action="store_true",
                    help="Exclude singleton clusters from the JSON dump.")
+    p.add_argument("--truth-file", default=None,
+                   help="Path to truth CSV (refID,truthID). If unset, "
+                        "auto-detected from --input via "
+                        "er_metrics.detect_truth_file (looks in --truth-dir).")
+    p.add_argument("--truth-dir", default="..",
+                   help="Directory containing truthABC*.txt files when "
+                        "--truth-file is auto-detected. Default: parent dir.")
+    p.add_argument("--no-metrics", action="store_true",
+                   help="Skip metrics computation and .metrics.{json,log} output.")
     return p.parse_args()
 
 
@@ -865,6 +1059,31 @@ if __name__ == "__main__":
         ]
 
     clusters_json_path = args.clusters_json or None
+
+    # Resolve truth file (explicit > auto-detect by --input filename).
+    truth_file_path = None
+    if not args.no_metrics:
+        if args.truth_file:
+            truth_file_path = args.truth_file
+            if not os.path.exists(truth_file_path):
+                print(f"[metrics] WARNING: --truth-file '{truth_file_path}' "
+                      f"not found; metrics will be computed without truth.")
+                truth_file_path = None
+        else:
+            try:
+                er_metrics_mod = _import_er_metrics()
+                detected = er_metrics_mod.detect_truth_file(
+                    args.input, truth_dir=args.truth_dir)
+                if detected and os.path.exists(detected):
+                    truth_file_path = detected
+                    print(f"[metrics] Auto-detected truth file: {truth_file_path}")
+                else:
+                    print(f"[metrics] No truth file found in {args.truth_dir} "
+                          f"for input '{args.input}'; metrics will be "
+                          f"computed without truth.")
+            except Exception as e:
+                print(f"[metrics] Truth-file detection failed: {e}")
+
     results = [run_pipeline(initial_blocks, max_recursion_depth,
                             min_intra_freq, all_refIDs, m, p,
                             top_k=args.top_k, tau=args.tau,
@@ -876,7 +1095,9 @@ if __name__ == "__main__":
                             original_refDict=original_refDict,
                             clusters_json_path=clusters_json_path,
                             single_run=single_run,
-                            include_singletons=not args.no_singletons_json)
+                            include_singletons=not args.no_singletons_json,
+                            truth_file_path=truth_file_path,
+                            write_metrics=not args.no_metrics)
                for (m, p) in configs]
 
     print("\n\n" + "=" * 110)
