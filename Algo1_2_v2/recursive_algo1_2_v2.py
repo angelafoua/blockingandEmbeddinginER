@@ -563,6 +563,82 @@ def blocking(refDict, tokenFreqDict, init_df_max,
     return blocks
 
 
+def hierarchical_blocking(refDict, tokenFreqDict, all_refIDs,
+                          progress_every=1000):
+    """Hierarchical, global-DF-ordered binary partitioning.
+
+    Sort tokens by DF descending (ties broken alphabetically). Start from
+    one universe block keyed by (). At each level, split every current
+    frontier block into (with-T, without-T); keep both halves. The token
+    is the same for every frontier block at a given level. Every block
+    produced at every level — root, internal nodes, and leaves — is
+    accumulated and returned as the entire tree.
+
+    Singleton frontier blocks and frontier blocks whose records all share
+    (or all lack) the current token are carried forward unchanged at the
+    frontier and are not re-emitted into the accumulator (already there
+    from the prior level).
+
+    Returns Dict[Hashable, Dict[refID, set]] matching the contract
+    expected by filter_top_k_smallest and cluster_records. Keys are
+    tuples of (token, 1|0) pairs recording the path from the root; the
+    universe block uses key ().
+    """
+    sorted_tokens = sorted(
+        tokenFreqDict.keys(),
+        key=lambda t: (-tokenFreqDict[t], t),
+    )
+    n_tokens = len(sorted_tokens)
+    print(f"Hierarchical blocking: {n_tokens} tokens, "
+          f"starting from 1 universe block of {len(all_refIDs)} records")
+
+    universe_refs = {refID: set(refDict[refID]) for refID in all_refIDs}
+    root_key = ()
+    all_blocks = {root_key: universe_refs}
+    frontier = {root_key: universe_refs}
+
+    for level, token in enumerate(sorted_tokens, 1):
+        new_frontier = {}
+        n_split = 0
+        n_carry_singleton = 0
+        n_carry_no_partition = 0
+        for key, refs in frontier.items():
+            if len(refs) <= 1:
+                new_frontier[key] = refs
+                n_carry_singleton += 1
+                continue
+            with_t = {r: ts for r, ts in refs.items() if token in ts}
+            without_t = {r: ts for r, ts in refs.items() if token not in ts}
+            if not with_t or not without_t:
+                new_frontier[key] = refs
+                n_carry_no_partition += 1
+                continue
+            yes_key = key + ((token, 1),)
+            no_key = key + ((token, 0),)
+            new_frontier[yes_key] = with_t
+            new_frontier[no_key] = without_t
+            all_blocks[yes_key] = with_t
+            all_blocks[no_key] = without_t
+            n_split += 1
+        frontier = new_frontier
+
+        if level <= 5 or level % progress_every == 0 or level == n_tokens:
+            sizes = [len(r) for r in frontier.values()]
+            max_size = max(sizes) if sizes else 0
+            n_singleton = sum(1 for s in sizes if s == 1)
+            print(f"  level {level}/{n_tokens} (token='{token}', "
+                  f"DF={tokenFreqDict[token]}): "
+                  f"frontier={len(frontier)} "
+                  f"(split={n_split}, carry_singleton={n_carry_singleton}, "
+                  f"carry_no_partition={n_carry_no_partition}), "
+                  f"tree={len(all_blocks)}, max_size={max_size}, "
+                  f"singletons={n_singleton}")
+
+    print(f"Hierarchical blocking finished: {len(all_blocks)} total blocks "
+          f"across the tree (frontier at last level: {len(frontier)})")
+    return all_blocks
+
+
 def candidate_pairs(blocks):
     """Total number of intra-block pairs across all blocks (with multiplicity)."""
     return sum((len(refs) * (len(refs) - 1)) // 2 for refs in blocks.values())
@@ -792,28 +868,44 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  original_refDict=None, clusters_json_path=None,
                  single_run=False, include_singletons=True,
                  truth_file_path=None, write_metrics=True,
-                 max_block_pair_cost=None):
-    """Run recursive blocking + filter + clustering with given ablation flags."""
+                 max_block_pair_cost=None,
+                 hierarchical=False, blocking_mode="default"):
+    """Run recursive blocking + filter + clustering with given ablation flags.
+
+    When hierarchical=True, `initial_blocks` is treated as already-final
+    (the full hierarchical tree). recursive_blocking, merge_blocks, and
+    purge_subset_blocks are skipped; do_merge / do_purge / max_recursion_depth
+    / min_intra_freq are ignored.
+    """
     import copy, tracemalloc
 
-    label = f"merge={do_merge}, purge={do_purge}"
+    if hierarchical:
+        label = f"mode=hierarchical"
+    else:
+        label = f"merge={do_merge}, purge={do_purge}"
     print(f"\n{'#' * 70}\n# RUN: {label}\n{'#' * 70}")
 
     blocks_in = copy.deepcopy(initial_blocks)
 
     tracemalloc.start()
     t0 = time.time()
-    peak = {"blocks": blocks_in, "size": len(blocks_in), "depth": 0}
-    final_blocks = recursive_blocking(1, blocks_in, max_recursion_depth,
-                                      min_intra_freq,
-                                      do_merge=do_merge, do_purge=do_purge,
-                                      peak=peak)
-    t_recursive = time.time() - t0
+    if hierarchical:
+        final_blocks = blocks_in
+        peak = {"blocks": final_blocks, "size": len(final_blocks), "depth": 0}
+        t_recursive = time.time() - t0
+        print(f"\nHierarchical mode: {len(final_blocks)} blocks already "
+              f"produced upstream; recursion / merge / purge skipped.")
+    else:
+        peak = {"blocks": blocks_in, "size": len(blocks_in), "depth": 0}
+        final_blocks = recursive_blocking(1, blocks_in, max_recursion_depth,
+                                          min_intra_freq,
+                                          do_merge=do_merge, do_purge=do_purge,
+                                          peak=peak)
+        t_recursive = time.time() - t0
+        print(f"\nPeak block count during recursion: {peak['size']} "
+              f"(at depth={peak['depth']})")
 
-    print(f"\nPeak block count during recursion: {peak['size']} "
-          f"(at depth={peak['depth']})")
-
-    if cluster_on == "peak":
+    if cluster_on == "peak" and not hierarchical:
         print(f"Clustering on PEAK snapshot ({peak['size']} blocks)")
         blocks_for_cluster = peak["blocks"]
     else:
@@ -839,6 +931,7 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
     final_blocks = blocks_for_cluster
 
     meta = {
+        "blocking_mode": blocking_mode,
         "do_merge": do_merge,
         "do_purge": do_purge,
         "max_recursion_depth": max_recursion_depth,
@@ -933,6 +1026,15 @@ def _parse_args():
                         "block as long as its DF >= 2. Disables length, "
                         "numeric, and DF-cap filters in blocking(). Pair with "
                         "--max-block-pair-cost to cap compute on huge blocks.")
+    p.add_argument("--hierarchical-blocking", action="store_true",
+                   help="Hierarchical blocking mode: sort all tokens by global "
+                        "DF (descending), and at each level split every "
+                        "frontier block into (with-token, without-token). The "
+                        "entire tree (root + internal nodes + leaves) is "
+                        "returned and feeds clustering. Bypasses blocking()'s "
+                        "DF / length / numeric filters; bypasses refine_blocks; "
+                        "forces single-config run with merge/purge skipped. "
+                        "Mutually exclusive with --full-blocking.")
     p.add_argument("--max-block-pair-cost", type=int, default=None,
                    help="Compute guardrail for build_arcs_graph: skip any "
                         "block whose pair count |B|*(|B|-1)/2 exceeds this "
@@ -1037,6 +1139,12 @@ def _resolve_legacy_args(args, refDict, tokenFreqDict):
 if __name__ == "__main__":
     args = _parse_args()
 
+    if args.hierarchical_blocking and args.full_blocking:
+        raise SystemExit(
+            "Error: --hierarchical-blocking and --full-blocking are mutually "
+            "exclusive."
+        )
+
     print("Starting...")
     refDict = build_refDict.tokenizeInput(args.input)
     print(f"Loaded {len(refDict)} records")
@@ -1066,49 +1174,77 @@ if __name__ == "__main__":
     print(f"  p50={rl_pct[0.5]}, p90={rl_pct[0.9]}, "
           f"p95={rl_pct[0.95]}, p99={rl_pct[0.99]}")
 
-    init_df_max, max_recursion_depth, min_intra_freq = _resolve_legacy_args(
-        args, refDict, tokenFreqDict)
-
-    # For comparison logging only, also show the legacy heuristic's value.
-    legacy_diag = compute_stop_k(refDict, factor=0.6)
-    print(f"[diagnostic] Legacy heuristic stop_k(factor=0.6) = {legacy_diag} "
-          f"(not used unless --stop-k* given)")
-
-    print(f"\nResolved parameters:")
-    print(f"  init_df_max         = {init_df_max}")
-    print(f"  max_recursion_depth = {max_recursion_depth}")
-    print(f"  min_intra_freq      = {min_intra_freq}")
-    print(f"  min_blk_token_len   = {args.min_blk_token_len}")
-    print(f"  exclude_numeric     = {not args.include_numeric}")
-    print(f"  min_block_size      = {args.min_block_size}")
-    print(f"  top_k               = {args.top_k}")
-    print(f"  tau                 = {args.tau}")
-    print(f"  arcs_weighting      = {args.arcs_weighting}")
-    print(f"  density_floor       = {args.density_floor} "
-          f"(min_size={args.density_min_size})")
-    print(f"  cluster_on          = {args.cluster_on}")
-
-    print("\nCreating initial blocks...")
-    initial_blocks = blocking(
-        refDict, tokenFreqDict, init_df_max=init_df_max,
-        min_blk_token_len=args.min_blk_token_len,
-        exclude_numeric_blocks=not args.include_numeric,
-        full_blocking=args.full_blocking,
-    )
-    print(f"Initial blocks created: {len(initial_blocks)}")
-
     all_refIDs = list(refDict.keys())
 
-    single_run = args.no_merge or args.no_purge
-    if single_run:
-        configs = [(not args.no_merge, not args.no_purge)]
+    if args.hierarchical_blocking:
+        blocking_mode = "hierarchical"
+        # Hierarchical mode owns the whole pipeline up to clustering;
+        # init_df_max / max_recursion_depth / min_intra_freq are unused.
+        init_df_max = None
+        max_recursion_depth = 0
+        min_intra_freq = 0
+
+        print(f"\nResolved parameters (hierarchical mode):")
+        print(f"  n_levels            = {len(tokenFreqDict)} "
+              f"(== unique tokens after stop-word removal)")
+        print(f"  min_block_size      = {args.min_block_size}")
+        print(f"  top_k               = {args.top_k}")
+        print(f"  tau                 = {args.tau}")
+        print(f"  arcs_weighting      = {args.arcs_weighting}")
+        print(f"  density_floor       = {args.density_floor} "
+              f"(min_size={args.density_min_size})")
+        print(f"  cluster_on          = final (forced)")
+
+        print("\nBuilding hierarchical block tree...")
+        initial_blocks = hierarchical_blocking(refDict, tokenFreqDict,
+                                               all_refIDs)
+        print(f"Hierarchical tree blocks: {len(initial_blocks)}")
+
+        single_run = True
+        configs = [(False, False)]
     else:
-        configs = [
-            (True,  True),   # V0 baseline
-            (True,  False),  # V1 no purge
-            (False, True),   # V2 no merge
-            (False, False),  # V3 neither
-        ]
+        blocking_mode = "full" if args.full_blocking else "default"
+        init_df_max, max_recursion_depth, min_intra_freq = _resolve_legacy_args(
+            args, refDict, tokenFreqDict)
+
+        # For comparison logging only, also show the legacy heuristic's value.
+        legacy_diag = compute_stop_k(refDict, factor=0.6)
+        print(f"[diagnostic] Legacy heuristic stop_k(factor=0.6) = {legacy_diag} "
+              f"(not used unless --stop-k* given)")
+
+        print(f"\nResolved parameters:")
+        print(f"  init_df_max         = {init_df_max}")
+        print(f"  max_recursion_depth = {max_recursion_depth}")
+        print(f"  min_intra_freq      = {min_intra_freq}")
+        print(f"  min_blk_token_len   = {args.min_blk_token_len}")
+        print(f"  exclude_numeric     = {not args.include_numeric}")
+        print(f"  min_block_size      = {args.min_block_size}")
+        print(f"  top_k               = {args.top_k}")
+        print(f"  tau                 = {args.tau}")
+        print(f"  arcs_weighting      = {args.arcs_weighting}")
+        print(f"  density_floor       = {args.density_floor} "
+              f"(min_size={args.density_min_size})")
+        print(f"  cluster_on          = {args.cluster_on}")
+
+        print("\nCreating initial blocks...")
+        initial_blocks = blocking(
+            refDict, tokenFreqDict, init_df_max=init_df_max,
+            min_blk_token_len=args.min_blk_token_len,
+            exclude_numeric_blocks=not args.include_numeric,
+            full_blocking=args.full_blocking,
+        )
+        print(f"Initial blocks created: {len(initial_blocks)}")
+
+        single_run = args.no_merge or args.no_purge
+        if single_run:
+            configs = [(not args.no_merge, not args.no_purge)]
+        else:
+            configs = [
+                (True,  True),   # V0 baseline
+                (True,  False),  # V1 no purge
+                (False, True),   # V2 no merge
+                (False, False),  # V3 neither
+            ]
 
     clusters_json_path = args.clusters_json or None
 
@@ -1150,17 +1286,27 @@ if __name__ == "__main__":
                             include_singletons=not args.no_singletons_json,
                             truth_file_path=truth_file_path,
                             write_metrics=not args.no_metrics,
-                            max_block_pair_cost=args.max_block_pair_cost)
+                            max_block_pair_cost=args.max_block_pair_cost,
+                            hierarchical=args.hierarchical_blocking,
+                            blocking_mode=blocking_mode)
                for (m, p) in configs]
 
     print("\n\n" + "=" * 110)
     print("ABLATION SUMMARY" if not single_run else "RUN SUMMARY")
-    print(f"init_df_max={init_df_max}, max_recursion_depth={max_recursion_depth}, "
-          f"min_intra_freq={min_intra_freq}, tau={args.tau}, "
-          f"top_k={args.top_k}, min_block_size={args.min_block_size}, "
-          f"arcs_weighting={args.arcs_weighting}, "
-          f"density_floor={args.density_floor}, "
-          f"cluster_on={args.cluster_on}")
+    if args.hierarchical_blocking:
+        print(f"mode=hierarchical, n_levels={len(tokenFreqDict)}, "
+              f"tau={args.tau}, top_k={args.top_k}, "
+              f"min_block_size={args.min_block_size}, "
+              f"arcs_weighting={args.arcs_weighting}, "
+              f"density_floor={args.density_floor}")
+    else:
+        print(f"mode={blocking_mode}, init_df_max={init_df_max}, "
+              f"max_recursion_depth={max_recursion_depth}, "
+              f"min_intra_freq={min_intra_freq}, tau={args.tau}, "
+              f"top_k={args.top_k}, min_block_size={args.min_block_size}, "
+              f"arcs_weighting={args.arcs_weighting}, "
+              f"density_floor={args.density_floor}, "
+              f"cluster_on={args.cluster_on}")
     print("=" * 110)
     headers = ["merge", "purge", "blks(rec)", "pairs(rec)", "blks(flt)",
                "pairs(flt)", "clusters", "multi", "single",
