@@ -283,8 +283,102 @@ class UnionFind:
         return list(clusters.values())
 
 
+DEFAULT_ARCS_FACTORS = {
+    "length_weight": 0.0,
+    "numeric_factor": 1.0,
+    "word_factor": 1.0,
+    "density_weight": 0.0,
+    "density_sample_cap": 200,
+}
+
+
+def _extract_key_tokens(key):
+    """Flatten any block-key shape to a list of token strings.
+
+    Shapes seen in this pipeline:
+      - bare token string                       (default blocking)
+      - tuple of token strings                  (after merge_blocks)
+      - tuple of (token, 0|1) presence pairs    (hierarchical_blocking)
+    """
+    if isinstance(key, tuple):
+        if not key:
+            return []
+        first = key[0]
+        if isinstance(first, tuple) and len(first) == 2 and isinstance(first[1], int):
+            return [t for (t, present) in key if present]
+        return [t for t in key if isinstance(t, str)]
+    if isinstance(key, str):
+        return [key]
+    return []
+
+
+def _key_length_score(tokens, length_weight):
+    if length_weight == 0.0 or not tokens:
+        return 1.0
+    import math
+    longest = max(len(t) for t in tokens)
+    return 1.0 + length_weight * math.log(1 + longest)
+
+
+def _key_type_factor(tokens, numeric_factor, word_factor):
+    if numeric_factor == 1.0 and word_factor == 1.0:
+        return 1.0
+    if not tokens:
+        return word_factor
+    return numeric_factor if all(t.isdigit() for t in tokens) else word_factor
+
+
+def _block_density_score(refs, density_weight, sample_cap):
+    """Mean Jaccard over up to `sample_cap` intra-block record pairs.
+
+    Deterministic per run (RNG seeded by block size). Returns
+    1.0 when density_weight == 0 (skips compute entirely).
+    """
+    if density_weight == 0.0:
+        return 1.0
+    items = list(refs.items())
+    n = len(items)
+    if n < 2:
+        return 1.0
+    total_pairs = n * (n - 1) // 2
+    if total_pairs <= sample_cap:
+        pair_iter = ((i, j) for i in range(n) for j in range(i + 1, n))
+        n_pairs = total_pairs
+    else:
+        import random
+        rng = random.Random(n)
+        seen = set()
+        sampled = []
+        while len(sampled) < sample_cap:
+            i = rng.randrange(n)
+            j = rng.randrange(n)
+            if i == j:
+                continue
+            if i > j:
+                i, j = j, i
+            if (i, j) in seen:
+                continue
+            seen.add((i, j))
+            sampled.append((i, j))
+        pair_iter = iter(sampled)
+        n_pairs = len(sampled)
+
+    sets = [s if isinstance(s, set) else set(s) for _, s in items]
+    total = 0.0
+    for i, j in pair_iter:
+        a, b = sets[i], sets[j]
+        if not a and not b:
+            continue
+        union = len(a | b)
+        if union == 0:
+            continue
+        total += len(a & b) / union
+    density = total / n_pairs if n_pairs else 0.0
+    return 1.0 + density_weight * density
+
+
 def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
-                     max_block_pair_cost=None):
+                     max_block_pair_cost=None, arcs_factors=None):
     """Build a weighted graph using ARCS scoring.
 
     For each block of size s containing N_corpus total records, every
@@ -303,16 +397,38 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
     s*(s-1)/2 exceeds the cap is skipped. Its per-pair contribution
     would be ≤ 1/s anyway, near zero for large s.
 
+    `arcs_factors` (dict) optionally enriches the per-block contribution
+    with three multiplicative factors: token length, token type
+    (numeric vs word), and block density. All factors collapse to 1.0
+    under default weights, leaving the original ARCS scoring unchanged.
+
     Returns {(refID_a, refID_b): weight} with refID_a < refID_b.
     """
     import math
     from collections import defaultdict
     edge_weights = defaultdict(float)
 
+    factors = dict(DEFAULT_ARCS_FACTORS)
+    if arcs_factors:
+        factors.update(arcs_factors)
+    length_weight = factors["length_weight"]
+    numeric_factor = factors["numeric_factor"]
+    word_factor = factors["word_factor"]
+    density_weight = factors["density_weight"]
+    density_sample_cap = factors["density_sample_cap"]
+    factors_active = (
+        length_weight != 0.0
+        or numeric_factor != 1.0
+        or word_factor != 1.0
+        or density_weight != 0.0
+    )
+
     n_skipped_too_big = 0
     pairs_skipped = 0
+    composite_samples = []
+    n_numeric_blocks = 0
 
-    for refs in blocks.values():
+    for key, refs in blocks.items():
         ref_list = list(refs.keys())
         block_size = len(ref_list)
         if block_size < 2:
@@ -331,6 +447,22 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
             contribution = 1.0 / block_size
         if contribution == 0.0:
             continue
+
+        if factors_active:
+            tokens = _extract_key_tokens(key)
+            length_factor = _key_length_score(tokens, length_weight)
+            type_factor = _key_type_factor(tokens, numeric_factor, word_factor)
+            density_factor = _block_density_score(
+                refs, density_weight, density_sample_cap
+            )
+            composite = length_factor * type_factor * density_factor
+            if composite == 0.0:
+                continue
+            contribution *= composite
+            composite_samples.append(composite)
+            if tokens and all(t.isdigit() for t in tokens):
+                n_numeric_blocks += 1
+
         for i in range(len(ref_list)):
             for j in range(i + 1, len(ref_list)):
                 a, b = ref_list[i], ref_list[j]
@@ -342,6 +474,19 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
         print(f"  [pair-cost guardrail] skipped {n_skipped_too_big} blocks "
               f"with >{max_block_pair_cost} pairs each "
               f"(total {pairs_skipped:,} pairs avoided)")
+
+    if factors_active and composite_samples:
+        composite_samples.sort()
+        n = len(composite_samples)
+        med = composite_samples[n // 2]
+        print(f"  [arcs factors] active: length_weight={length_weight}, "
+              f"numeric_factor={numeric_factor}, word_factor={word_factor}, "
+              f"density_weight={density_weight} "
+              f"(sample_cap={density_sample_cap})")
+        print(f"  [arcs factors] composite multiplier across "
+              f"{n} blocks: min={composite_samples[0]:.4f}, "
+              f"median={med:.4f}, max={composite_samples[-1]:.4f}; "
+              f"all-numeric blocks: {n_numeric_blocks}")
 
     return edge_weights
 
@@ -434,7 +579,7 @@ def _split_cluster_by_density(cluster, internal_edges,
 
 def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform",
                     density_floor=0.0, density_min_size=3,
-                    max_block_pair_cost=None):
+                    max_block_pair_cost=None, arcs_factors=None):
     """Build ARCS graph, prune edges below tau, return clusters via Union-Find.
     If `density_floor > 0`, post-process clusters by splitting any whose
     internal edge density falls below the floor (helps resist
@@ -444,7 +589,8 @@ def cluster_records(blocks, all_refIDs, tau=1.0, weighting="uniform",
     start = time.time()
     edge_weights = build_arcs_graph(blocks, weighting=weighting,
                                     corpus_size=len(all_refIDs),
-                                    max_block_pair_cost=max_block_pair_cost)
+                                    max_block_pair_cost=max_block_pair_cost,
+                                    arcs_factors=arcs_factors)
     print(f"  Graph built in {time.time() - start:.2f}s — {len(edge_weights)} edges")
 
     _print_edge_histogram(edge_weights)
@@ -869,7 +1015,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  single_run=False, include_singletons=True,
                  truth_file_path=None, write_metrics=True,
                  max_block_pair_cost=None,
-                 hierarchical=False, blocking_mode="default"):
+                 hierarchical=False, blocking_mode="default",
+                 arcs_factors=None):
     """Run recursive blocking + filter + clustering with given ablation flags.
 
     When hierarchical=True, `initial_blocks` is treated as already-final
@@ -925,7 +1072,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                                weighting=arcs_weighting,
                                density_floor=density_floor,
                                density_min_size=density_min_size,
-                               max_block_pair_cost=max_block_pair_cost)
+                               max_block_pair_cost=max_block_pair_cost,
+                               arcs_factors=arcs_factors)
     t_cluster = time.time() - t0
 
     final_blocks = blocks_for_cluster
@@ -943,6 +1091,7 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
         "arcs_weighting": arcs_weighting,
         "density_floor": density_floor,
         "density_min_size": density_min_size,
+        "arcs_factors": arcs_factors or dict(DEFAULT_ARCS_FACTORS),
     }
 
     out_path = None
@@ -1078,6 +1227,26 @@ def _parse_args():
     p.add_argument("--density-min-size", type=int, default=3,
                    help="Only consider density splitting for clusters of "
                         "at least this size.")
+    p.add_argument("--arcs-length-weight", type=float, default=0.0,
+                   help="Per-block multiplier on ARCS contribution: "
+                        "1 + weight * log(1 + max-token-length-in-key). "
+                        "0.0 disables (default).")
+    p.add_argument("--arcs-numeric-factor", type=float, default=1.0,
+                   help="Multiplier applied to ARCS contributions from "
+                        "blocks whose key is purely numeric (default 1.0). "
+                        "Set <1.0 to down-weight (e.g. 0.5).")
+    p.add_argument("--arcs-word-factor", type=float, default=1.0,
+                   help="Multiplier applied to ARCS contributions from "
+                        "blocks whose key contains any non-numeric token "
+                        "(default 1.0).")
+    p.add_argument("--arcs-density-weight", type=float, default=0.0,
+                   help="Per-block multiplier on ARCS contribution: "
+                        "1 + weight * mean_intra_block_jaccard. "
+                        "0.0 disables (default). Recommended start: 1.0.")
+    p.add_argument("--arcs-density-sample-cap", type=int, default=200,
+                   help="Compute cap for block-density estimate: at most "
+                        "this many intra-block record pairs are sampled "
+                        "per block (deterministic, seeded by block size).")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
     p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
@@ -1272,6 +1441,14 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"[metrics] Truth-file detection failed: {e}")
 
+    arcs_factors = {
+        "length_weight": args.arcs_length_weight,
+        "numeric_factor": args.arcs_numeric_factor,
+        "word_factor": args.arcs_word_factor,
+        "density_weight": args.arcs_density_weight,
+        "density_sample_cap": args.arcs_density_sample_cap,
+    }
+
     results = [run_pipeline(initial_blocks, max_recursion_depth,
                             min_intra_freq, all_refIDs, m, p,
                             top_k=args.top_k, tau=args.tau,
@@ -1288,7 +1465,8 @@ if __name__ == "__main__":
                             write_metrics=not args.no_metrics,
                             max_block_pair_cost=args.max_block_pair_cost,
                             hierarchical=args.hierarchical_blocking,
-                            blocking_mode=blocking_mode)
+                            blocking_mode=blocking_mode,
+                            arcs_factors=arcs_factors)
                for (m, p) in configs]
 
     print("\n\n" + "=" * 110)
