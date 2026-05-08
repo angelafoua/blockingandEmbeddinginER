@@ -443,6 +443,8 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
                 contribution = 0.0
             else:
                 contribution = math.log(corpus_size / block_size) / block_size
+        elif weighting == "count":
+            contribution = 1.0
         else:
             contribution = 1.0 / block_size
         if contribution == 0.0:
@@ -1210,13 +1212,16 @@ def _parse_args():
                         "Note: scale depends on --arcs-weighting (uniform "
                         "weights live in [0, ~1]; idf weights live in "
                         "[0, log(N)] where N is corpus size).")
-    p.add_argument("--arcs-weighting", choices=["uniform", "idf"],
+    p.add_argument("--arcs-weighting", choices=["uniform", "idf", "count"],
                    default="uniform",
                    help="ARCS contribution per shared block. "
                         "'uniform' = 1/|B| (original); "
                         "'idf' = log(N/|B|) / |B| (down-weights generic "
-                        "blocks, sharpens precision). Re-tune --tau when "
-                        "switching modes.")
+                        "blocks, sharpens precision); "
+                        "'count' = 1 per shared block, so the edge weight "
+                        "is the integer number of blocks two records share "
+                        "and --tau becomes a min-shared-blocks threshold "
+                        "(e.g. --tau 3). Re-tune --tau when switching modes.")
     p.add_argument("--density-floor", type=float, default=0.0,
                    help="Post-process: split any cluster whose internal "
                         "edge density (kept-edges / max-possible-edges) "
