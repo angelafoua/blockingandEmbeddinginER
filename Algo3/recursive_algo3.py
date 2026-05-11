@@ -245,4 +245,5 @@ if __name__ == "__main__":
     if truth_file is None:
         print("No truth file matched for input; skipping ER metrics.")
     else:
-        er_metrics.compute_metrics(refid_blocks, truth_file)
+        er_metrics.compute_metrics(refid_blocks, truth_file,
+                                   universe=original_refDict.keys())
