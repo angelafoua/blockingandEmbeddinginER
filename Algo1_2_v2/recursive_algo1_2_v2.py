@@ -898,7 +898,7 @@ def compute_run_metrics(clusters, all_refIDs, truth_file_path=None,
         # Pair-based metrics: convert cluster list to {cid: [refIDs]}
         cluster_blocks = {i: c for i, c in enumerate(clusters)}
         pair = er_metrics.compute_metrics(cluster_blocks, truth_file_path,
-                                          verbose=False)
+                                          verbose=False, universe=all_set)
 
         all_sizes = set(size_dist) | set(truth_dist)
         l1 = sum(abs(size_dist.get(s, 0) - truth_dist.get(s, 0))
