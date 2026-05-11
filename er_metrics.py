@@ -73,7 +73,7 @@ def _extract_ref_ids(block_value):
     return list(block_value)
 
 
-def compute_metrics(blocks, truth_file_path, verbose=True):
+def compute_metrics(blocks, truth_file_path, verbose=True, universe=None):
     """Compute pair-based precision, recall, F1.
 
     Parameters
@@ -85,6 +85,13 @@ def compute_metrics(blocks, truth_file_path, verbose=True):
         Path to the truth CSV file.
     verbose : bool
         Print metrics to stdout.
+    universe : iterable of refIDs, optional
+        If given, restrict the truth clustering to refIDs in this set
+        before building true pairs.  Required when the input file is a
+        proper subset of the truth file's records (e.g. running S1G.txt
+        against truthABCgoodDQ.txt) — otherwise E counts truth pairs
+        whose endpoints are not even in the input, inflating the
+        denominator and crushing recall.
 
     Returns
     -------
@@ -104,6 +111,9 @@ def compute_metrics(blocks, truth_file_path, verbose=True):
     L = len(candidate_pairs)
 
     # ---- Build the set of true pairs from the truth clustering ----
+    if universe is not None:
+        universe_set = set(universe)
+        truth = {r: t for r, t in truth.items() if r in universe_set}
     truth_clusters = {}
     for ref_id, t_id in truth.items():
         truth_clusters.setdefault(t_id, []).append(ref_id)
