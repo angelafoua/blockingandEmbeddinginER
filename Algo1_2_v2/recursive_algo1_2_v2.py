@@ -20,8 +20,30 @@ import build_tokenFreqDict
 from refine_blocks import refine_blocks
 import ast
 import os
+import re
 from pathlib import Path
 import build_refDict
+
+
+_NON_WORD_RE = re.compile(r"\W+")
+
+
+def clean_non_word_chars(refDict):
+    """Replace every non-word character in each extracted token with a
+    space, then re-split so the resulting tokens are pure `\\w+` runs.
+
+    Applied immediately after CSV extraction so all downstream stages
+    (frequency counts, blocking, refinement) see only word-character
+    tokens.
+    """
+    cleaned = {}
+    for refID, tokens in refDict.items():
+        new_tokens = []
+        for tok in tokens:
+            for piece in _NON_WORD_RE.sub(" ", tok).split():
+                new_tokens.append(piece)
+        cleaned[refID] = new_tokens
+    return cleaned
 
 
 def load_dict(path_str):
@@ -1317,6 +1339,9 @@ if __name__ == "__main__":
     print("Starting...")
     refDict = build_refDict.tokenizeInput(args.input)
     print(f"Loaded {len(refDict)} records")
+
+    refDict = clean_non_word_chars(refDict)
+    print("Replaced non-word characters with spaces in extracted tokens")
 
     # Preserve the original tokenization (pre stop-word removal) so the
     # clusters JSON dump can include all elements of each record.
