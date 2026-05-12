@@ -1,0 +1,3 @@
+create blocks
+build graph
+find similarity between two records
