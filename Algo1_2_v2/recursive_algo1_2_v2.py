@@ -311,6 +311,7 @@ DEFAULT_ARCS_FACTORS = {
     "word_factor": 1.0,
     "density_weight": 0.0,
     "density_sample_cap": 200,
+    "pair_sim_weight": 1.0,
 }
 
 
@@ -420,9 +421,14 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
     would be ≤ 1/s anyway, near zero for large s.
 
     `arcs_factors` (dict) optionally enriches the per-block contribution
-    with three multiplicative factors: token length, token type
-    (numeric vs word), and block density. All factors collapse to 1.0
-    under default weights, leaving the original ARCS scoring unchanged.
+    with multiplicative factors:
+      - token length, token type (numeric vs word), block density
+        (applied uniformly to every pair in the block)
+      - pair_sim_weight (default 1.0): scales each pair's contribution
+        by the Jaccard similarity of the two records' token sets,
+        i.e. shared_tokens / (|tokens_A| + |tokens_B| - shared_tokens).
+        At 1.0 two records that share no tokens contribute nothing;
+        at 0.0 all pairs in a block are treated equally (original behaviour).
 
     Returns {(refID_a, refID_b): weight} with refID_a < refID_b.
     """
@@ -438,12 +444,15 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
     word_factor = factors["word_factor"]
     density_weight = factors["density_weight"]
     density_sample_cap = factors["density_sample_cap"]
-    factors_active = (
+    pair_sim_weight = factors["pair_sim_weight"]
+
+    block_factors_active = (
         length_weight != 0.0
         or numeric_factor != 1.0
         or word_factor != 1.0
         or density_weight != 0.0
     )
+    pair_sim_active = pair_sim_weight > 0.0
 
     n_skipped_too_big = 0
     pairs_skipped = 0
@@ -470,7 +479,7 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
         if contribution == 0.0:
             continue
 
-        if factors_active:
+        if block_factors_active:
             tokens = _extract_key_tokens(key)
             length_factor = _key_length_score(tokens, length_weight)
             type_factor = _key_type_factor(tokens, numeric_factor, word_factor)
@@ -485,19 +494,38 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
             if tokens and all(t.isdigit() for t in tokens):
                 n_numeric_blocks += 1
 
+        if pair_sim_active:
+            # Precompute frozen token sets aligned with ref_list so the inner
+            # loop can index into them without repeated dict lookups.
+            rec_sets = [
+                refs[r] if isinstance(refs[r], frozenset)
+                else frozenset(refs[r])
+                for r in ref_list
+            ]
+
         for i in range(len(ref_list)):
             for j in range(i + 1, len(ref_list)):
                 a, b = ref_list[i], ref_list[j]
                 if a > b:
                     a, b = b, a
-                edge_weights[(a, b)] += contribution
+                if pair_sim_active:
+                    ta, tb = rec_sets[i], rec_sets[j]
+                    shared = len(ta & tb)
+                    union_size = len(ta) + len(tb) - shared
+                    jaccard = shared / union_size if union_size > 0 else 0.0
+                    pair_contribution = contribution * (
+                        1.0 - pair_sim_weight + pair_sim_weight * jaccard
+                    )
+                else:
+                    pair_contribution = contribution
+                edge_weights[(a, b)] += pair_contribution
 
     if max_block_pair_cost is not None and n_skipped_too_big > 0:
         print(f"  [pair-cost guardrail] skipped {n_skipped_too_big} blocks "
               f"with >{max_block_pair_cost} pairs each "
               f"(total {pairs_skipped:,} pairs avoided)")
 
-    if factors_active and composite_samples:
+    if block_factors_active and composite_samples:
         composite_samples.sort()
         n = len(composite_samples)
         med = composite_samples[n // 2]
@@ -509,6 +537,11 @@ def build_arcs_graph(blocks, weighting="uniform", corpus_size=None,
               f"{n} blocks: min={composite_samples[0]:.4f}, "
               f"median={med:.4f}, max={composite_samples[-1]:.4f}; "
               f"all-numeric blocks: {n_numeric_blocks}")
+
+    if pair_sim_active:
+        print(f"  [pair similarity] pair_sim_weight={pair_sim_weight}: "
+              f"each pair's ARCS contribution scaled by "
+              f"shared_tokens / (|A| + |B| - shared_tokens)")
 
     return edge_weights
 
@@ -1269,6 +1302,15 @@ def _parse_args():
                    help="Compute cap for block-density estimate: at most "
                         "this many intra-block record pairs are sampled "
                         "per block (deterministic, seeded by block size).")
+    p.add_argument("--arcs-pair-sim-weight", type=float, default=1.0,
+                   help="Per-pair similarity factor for ARCS scoring. "
+                        "Each pair's block contribution is multiplied by "
+                        "(1 - w) + w * jaccard(tokens_A, tokens_B), where "
+                        "jaccard = shared_tokens / (|A| + |B| - shared). "
+                        "1.0 (default): contribution fully modulated by "
+                        "per-pair token overlap; records sharing no tokens "
+                        "contribute nothing. 0.0: all pairs in a block are "
+                        "weighted equally (original ARCS behaviour).")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
     p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
@@ -1472,6 +1514,7 @@ if __name__ == "__main__":
         "word_factor": args.arcs_word_factor,
         "density_weight": args.arcs_density_weight,
         "density_sample_cap": args.arcs_density_sample_cap,
+        "pair_sim_weight": args.arcs_pair_sim_weight,
     }
 
     results = [run_pipeline(initial_blocks, max_recursion_depth,
