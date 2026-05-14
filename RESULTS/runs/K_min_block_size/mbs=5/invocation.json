@@ -1,0 +1,23 @@
+{
+  "group": "K_min_block_size",
+  "config_id": "mbs=5",
+  "label": "min_block_size=5",
+  "cmd": [
+    "/usr/local/bin/python3",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S7GX.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/K_min_block_size/mbs=5/clusters.json",
+    "--min-block-size",
+    "5"
+  ],
+  "extra_args": [
+    "--min-block-size",
+    "5"
+  ],
+  "returncode": 0,
+  "wallclock_s": 29.54891562461853
+}
