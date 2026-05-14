@@ -1,11 +1,11 @@
 {
   "metadata": {
     "blocking_mode": "default",
-    "do_merge": true,
+    "do_merge": false,
     "do_purge": true,
     "max_recursion_depth": 5,
     "min_intra_freq": 2,
-    "top_k": 10,
+    "top_k": 5,
     "tau": 0.2,
     "min_block_size": 2,
     "filter_mode": "size",

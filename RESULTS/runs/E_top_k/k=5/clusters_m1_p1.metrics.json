@@ -1,11 +1,11 @@
 {
   "config": {
     "blocking_mode": "default",
-    "do_merge": false,
-    "do_purge": false,
+    "do_merge": true,
+    "do_purge": true,
     "max_recursion_depth": 5,
     "min_intra_freq": 2,
-    "top_k": 10,
+    "top_k": 5,
     "tau": 0.2,
     "min_block_size": 2,
     "filter_mode": "size",
@@ -25,56 +25,55 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 1912,
-  "n_unique_records": 1912,
+  "n_records_total": 2912,
+  "n_unique_records": 2912,
   "predicted_clusters": {
-    "n_total": 1188,
-    "n_multi": 564,
-    "n_singletons": 624,
+    "n_total": 2250,
+    "n_multi": 516,
+    "n_singletons": 1734,
     "min_size": 1,
-    "max_size": 6,
-    "mean_size": 1.609,
+    "max_size": 5,
+    "mean_size": 1.294,
     "median_size": 1.0,
     "size_distribution": {
-      "1": 624,
-      "2": 432,
-      "3": 110,
-      "4": 17,
-      "5": 4,
-      "6": 1
+      "1": 1734,
+      "2": 384,
+      "3": 120,
+      "4": 10,
+      "5": 2
     }
   },
   "truth_clusters": {
     "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 1188,
+    "n_total": 1827,
     "min_size": 1,
     "max_size": 6,
-    "mean_size": 1.609,
-    "median_size": 1.0,
+    "mean_size": 1.594,
+    "median_size": 1,
     "size_distribution": {
-      "1": 678,
-      "2": 339,
-      "3": 136,
-      "4": 28,
-      "5": 6,
+      "1": 1056,
+      "2": 516,
+      "3": 205,
+      "4": 42,
+      "5": 7,
       "6": 1
     }
   },
   "pair_metrics": {
-    "TP": 768,
-    "E": 990,
-    "L": 919,
-    "FP": 151,
-    "FN": 222,
-    "precision": 0.8357,
-    "recall": 0.7758,
-    "f1": 0.8046
+    "TP": 802,
+    "E": 1468,
+    "L": 824,
+    "FP": 22,
+    "FN": 666,
+    "precision": 0.9733,
+    "recall": 0.5463,
+    "f1": 0.6998
   },
-  "size_distribution_l1": 186,
-  "cluster_count_diff": 0,
+  "size_distribution_l1": 933,
+  "cluster_count_diff": 423,
   "timings_seconds": {
-    "recursive": 1.503,
-    "filter": 0.282,
-    "cluster": 0.222
+    "recursive": 0.506,
+    "filter": 0.049,
+    "cluster": 0.155
   }
 }
