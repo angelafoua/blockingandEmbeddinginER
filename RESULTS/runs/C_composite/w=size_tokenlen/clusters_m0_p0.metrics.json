@@ -25,51 +25,56 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 100,
-  "n_unique_records": 100,
+  "n_records_total": 1912,
+  "n_unique_records": 1912,
   "predicted_clusters": {
-    "n_total": 64,
-    "n_multi": 31,
-    "n_singletons": 33,
+    "n_total": 1242,
+    "n_multi": 563,
+    "n_singletons": 679,
     "min_size": 1,
-    "max_size": 3,
-    "mean_size": 1.562,
+    "max_size": 6,
+    "mean_size": 1.539,
     "median_size": 1.0,
     "size_distribution": {
-      "1": 33,
-      "2": 26,
-      "3": 5
+      "1": 679,
+      "2": 470,
+      "3": 83,
+      "4": 7,
+      "5": 2,
+      "6": 1
     }
   },
   "truth_clusters": {
     "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 62,
+    "n_total": 1188,
     "min_size": 1,
-    "max_size": 4,
-    "mean_size": 1.613,
+    "max_size": 6,
+    "mean_size": 1.609,
     "median_size": 1.0,
     "size_distribution": {
-      "1": 33,
-      "2": 21,
-      "3": 7,
-      "4": 1
+      "1": 678,
+      "2": 339,
+      "3": 136,
+      "4": 28,
+      "5": 6,
+      "6": 1
     }
   },
   "pair_metrics": {
-    "TP": 38,
-    "E": 48,
-    "L": 41,
-    "FP": 3,
-    "FN": 10,
-    "precision": 0.9268,
-    "recall": 0.7917,
-    "f1": 0.8539
+    "TP": 708,
+    "E": 990,
+    "L": 796,
+    "FP": 88,
+    "FN": 282,
+    "precision": 0.8894,
+    "recall": 0.7152,
+    "f1": 0.7928
   },
-  "size_distribution_l1": 8,
-  "cluster_count_diff": 2,
+  "size_distribution_l1": 210,
+  "cluster_count_diff": 54,
   "timings_seconds": {
-    "recursive": 0.356,
-    "filter": 0.062,
-    "cluster": 0.007
+    "recursive": 1.498,
+    "filter": 0.299,
+    "cluster": 0.08
   }
 }
