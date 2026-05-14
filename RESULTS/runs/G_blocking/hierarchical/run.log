@@ -1,22 +1,22 @@
 # group=G_blocking config_id=hierarchical
 # label=hierarchical blocking
-# cmd=/usr/local/bin/python3 recursive_algo1_2_v2.py --input ../S2G.txt --truth-dir .. --clusters-json /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json --hierarchical-blocking
+# cmd=/usr/local/bin/python3 recursive_algo1_2_v2.py --input ../S4G.txt --truth-dir .. --clusters-json /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json --hierarchical-blocking
 
 Starting...
-Loaded 100 records
+Loaded 1912 records
 Replaced non-word characters with spaces in extracted tokens
-Built token frequency dict with 352 unique tokens
-Stop-word removal: dropped 3 tokens with freq > 60
-  Examples: ['NC', 'SALEM', 'WINSTON']
-Rebuilt token frequency dict: 349 unique tokens remain
+Built token frequency dict with 4694 unique tokens
+Stop-word removal: dropped 27 tokens with freq > 60
+  Examples: ['NC', 'SALEM', 'WINSTON', 'ADAMS', 'DR', 'RD', 'CT', '27106', 'KERNERSVILLE', '27284', 'ST', '27105', '27103', 'LN', '27104']
+Rebuilt token frequency dict: 4667 unique tokens remain
 
 DF distribution percentiles (post-cleanup):
-  p50=2, p90=4, p95=6, p99=17
+  p50=2, p90=5, p95=7, p99=22
 Record-length percentiles (distinct tokens, post-cleanup):
-  p50=8, p90=10, p95=10, p99=12
+  p50=6, p90=8, p95=9, p99=11
 
 Resolved parameters (hierarchical mode):
-  n_levels            = 349 (== unique tokens after stop-word removal)
+  n_levels            = 4667 (== unique tokens after stop-word removal)
   min_block_size      = 2
   top_k               = 3
   filter_mode         = size
@@ -26,50 +26,54 @@ Resolved parameters (hierarchical mode):
   cluster_on          = final (forced)
 
 Building hierarchical block tree...
-Hierarchical blocking: 349 tokens, starting from 1 universe block of 100 records
-  level 1/349 (token='ABBOTT', DF=38): frontier=2 (split=1, carry_singleton=0, carry_no_partition=0), tree=3, max_size=62, singletons=0
-  level 2/349 (token='AARON', DF=33): frontier=3 (split=1, carry_singleton=0, carry_no_partition=1), tree=5, max_size=38, singletons=0
-  level 3/349 (token='DR', DF=25): frontier=6 (split=3, carry_singleton=0, carry_no_partition=0), tree=11, max_size=26, singletons=0
-  level 4/349 (token='27106', DF=17): frontier=11 (split=5, carry_singleton=0, carry_no_partition=1), tree=21, max_size=26, singletons=1
-  level 5/349 (token='RD', DF=16): frontier=14 (split=3, carry_singleton=1, carry_no_partition=7), tree=27, max_size=23, singletons=1
-  level 349/349 (token='WYCLIFF', DF=1): frontier=82 (split=0, carry_singleton=68, carry_no_partition=14), tree=163, max_size=3, singletons=68
-Hierarchical blocking finished: 163 total blocks across the tree (frontier at last level: 82)
-Hierarchical tree blocks: 163
+Hierarchical blocking: 4667 tokens, starting from 1 universe block of 1912 records
+  level 1/4667 (token='ABBOTT', DF=60): frontier=2 (split=1, carry_singleton=0, carry_no_partition=0), tree=3, max_size=1852, singletons=0
+  level 2/4667 (token='RIDGE', DF=54): frontier=4 (split=2, carry_singleton=0, carry_no_partition=0), tree=7, max_size=1799, singletons=1
+  level 3/4667 (token='HALL', DF=53): frontier=6 (split=2, carry_singleton=1, carry_no_partition=1), tree=11, max_size=1755, singletons=2
+  level 4/4667 (token='S', DF=53): frontier=8 (split=2, carry_singleton=2, carry_no_partition=2), tree=15, max_size=1703, singletons=3
+  level 5/4667 (token='W', DF=52): frontier=11 (split=3, carry_singleton=3, carry_no_partition=2), tree=21, max_size=1657, singletons=5
+  level 1000/4667 (token='979692305', DF=3): frontier=1331 (split=0, carry_singleton=947, carry_no_partition=384), tree=2661, max_size=43, singletons=947
+  level 2000/4667 (token='CLAY', DF=2): frontier=1450 (split=0, carry_singleton=1095, carry_no_partition=355), tree=2899, max_size=11, singletons=1095
+  level 3000/4667 (token='501612312', DF=1): frontier=1497 (split=0, carry_singleton=1170, carry_no_partition=327), tree=2993, max_size=6, singletons=1170
+  level 4000/4667 (token='EDUARDO', DF=1): frontier=1521 (split=0, carry_singleton=1216, carry_no_partition=305), tree=3041, max_size=6, singletons=1216
+  level 4667/4667 (token='ZANVESTER', DF=1): frontier=1531 (split=0, carry_singleton=1236, carry_no_partition=295), tree=3061, max_size=6, singletons=1236
+Hierarchical blocking finished: 3061 total blocks across the tree (frontier at last level: 1531)
+Hierarchical tree blocks: 3061
 [metrics] Auto-detected truth file: ../truthABCgoodDQ.txt
 
 ######################################################################
 # RUN: mode=hierarchical
 ######################################################################
 
-Hierarchical mode: 163 blocks already produced upstream; recursion / merge / purge skipped.
-Clustering on FINAL snapshot (163 blocks)
+Hierarchical mode: 3061 blocks already produced upstream; recursion / merge / purge skipped.
+Clustering on FINAL snapshot (3061 blocks)
 
 Building ARCS weighted graph (weighting=uniform)...
   [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
-  Graph built in 0.01s — 148 edges
-  ARCS edge-weight histogram (148 edges, range [0.0000, 1.2500]):
-    [0.0000, 0.1250): 88
-    [0.1250, 0.2500): 13
-    [0.2500, 0.3750): 9
-    [0.3750, 0.5000): 6
-    [0.5000, 0.6250): 3
-    [0.6250, 0.7500): 6
-    [0.7500, 0.8750): 13
-    [0.8750, 1.0000): 1
-    [1.0000, 1.1250): 4
-    [1.1250, 1.2500): 5
-  Edges kept (weight >= 0.2): 49 / 148
-  Clusters (pre-density): 28 multi-record, 34 singletons
-  Wrote 62 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json
+  Graph built in 0.10s — 2861 edges
+  ARCS edge-weight histogram (2861 edges, range [0.0000, 1.5000]):
+    [0.0000, 0.1500): 2071
+    [0.1500, 0.3000): 99
+    [0.3000, 0.4500): 71
+    [0.4500, 0.6000): 98
+    [0.6000, 0.7500): 124
+    [0.7500, 0.9000): 141
+    [0.9000, 1.0500): 101
+    [1.0500, 1.2000): 125
+    [1.2000, 1.3500): 30
+    [1.3500, 1.5000): 1
+  Edges kept (weight >= 0.2): 742 / 2861
+  Clusters (pre-density): 422 multi-record, 919 singletons
+  Wrote 1341 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json
   Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.json
   Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.log
 
 
 ==============================================================================================================
 RUN SUMMARY
-mode=hierarchical, n_levels=349, tau=0.2, top_k=3, min_block_size=2, arcs_weighting=uniform, density_floor=0.0
+mode=hierarchical, n_levels=4667, tau=0.2, top_k=3, min_block_size=2, arcs_weighting=uniform, density_floor=0.0
 ==============================================================================================================
 merge purge  blks(rec)   pairs(rec)  blks(flt)   pairs(flt)  clusters  multi  single  t_rec(s)  t_flt(s)  t_clu(s)  peak(MB)
 --------------------------------------------------------------------------------------------------------------
-    F     F        163        11299         83          227        62     28      34      0.00      0.01      0.01     245.9
+    F     F       3061     53507594       1610         4302      1341    422     919      0.00      0.41      0.11     246.8
 ==============================================================================================================
