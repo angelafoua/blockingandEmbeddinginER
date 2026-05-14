@@ -2,10 +2,10 @@
   "config": {
     "blocking_mode": "default",
     "do_merge": true,
-    "do_purge": true,
+    "do_purge": false,
     "max_recursion_depth": 5,
     "min_intra_freq": 2,
-    "top_k": 3,
+    "top_k": 10,
     "tau": 0.2,
     "min_block_size": 2,
     "filter_mode": "size",
@@ -13,7 +13,7 @@
     "weight_shared": 0.0,
     "weight_tokenlen": 0.0,
     "cluster_on": "final",
-    "arcs_weighting": "idf",
+    "arcs_weighting": "uniform",
     "density_floor": 0.0,
     "density_min_size": 3,
     "arcs_factors": {
@@ -25,61 +25,56 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 1912,
-  "n_unique_records": 1912,
+  "n_records_total": 2912,
+  "n_unique_records": 2912,
   "predicted_clusters": {
-    "n_total": 877,
-    "n_multi": 508,
-    "n_singletons": 369,
+    "n_total": 1878,
+    "n_multi": 733,
+    "n_singletons": 1145,
     "min_size": 1,
-    "max_size": 15,
-    "mean_size": 2.18,
-    "median_size": 2,
+    "max_size": 6,
+    "mean_size": 1.551,
+    "median_size": 1.0,
     "size_distribution": {
-      "1": 369,
-      "2": 251,
-      "3": 135,
-      "4": 58,
-      "5": 29,
-      "6": 16,
-      "7": 4,
-      "8": 8,
-      "9": 5,
-      "11": 1,
-      "15": 1
+      "1": 1145,
+      "2": 492,
+      "3": 193,
+      "4": 37,
+      "5": 10,
+      "6": 1
     }
   },
   "truth_clusters": {
     "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 1188,
+    "n_total": 1827,
     "min_size": 1,
     "max_size": 6,
-    "mean_size": 1.609,
-    "median_size": 1.0,
+    "mean_size": 1.594,
+    "median_size": 1,
     "size_distribution": {
-      "1": 678,
-      "2": 339,
-      "3": 136,
-      "4": 28,
-      "5": 6,
+      "1": 1056,
+      "2": 516,
+      "3": 205,
+      "4": 42,
+      "5": 7,
       "6": 1
     }
   },
   "pair_metrics": {
-    "TP": 927,
-    "E": 990,
-    "L": 2182,
-    "FP": 1255,
-    "FN": 63,
-    "precision": 0.4248,
-    "recall": 0.9364,
-    "f1": 0.5845
+    "TP": 1238,
+    "E": 1468,
+    "L": 1408,
+    "FP": 170,
+    "FN": 230,
+    "precision": 0.8793,
+    "recall": 0.8433,
+    "f1": 0.8609
   },
-  "size_distribution_l1": 485,
-  "cluster_count_diff": -311,
+  "size_distribution_l1": 133,
+  "cluster_count_diff": 51,
   "timings_seconds": {
-    "recursive": 0.331,
-    "filter": 0.03,
-    "cluster": 0.101
+    "recursive": 0.512,
+    "filter": 0.075,
+    "cluster": 0.198
   }
 }
