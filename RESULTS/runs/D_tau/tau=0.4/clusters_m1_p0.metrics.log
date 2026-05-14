@@ -22,50 +22,50 @@
   arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
 
 [Records]
-  total                    = 1912
-  unique                   = 1912
+  total                    = 3004
+  unique                   = 3004
 
 [Predicted Clusters]
-  total                    = 1394
-  multi-record             = 417
-  singletons               = 977
+  total                    = 2259
+  multi-record             = 618
+  singletons               = 1641
   size  min / max          = 1 / 4
-  size  mean / median      = 1.372 / 1.0
+  size  mean / median      = 1.33 / 1
   size distribution (size: count):
-    size   1 : 977
-    size   2 : 320
-    size   3 : 93
-    size   4 : 4
+    size   1 : 1641
+    size   2 : 494
+    size   3 : 121
+    size   4 : 3
 
 [Truth Clusters]  (../truthABCgoodDQ.txt)
-  total                    = 1188
+  total                    = 1877
   size  min / max          = 1 / 6
-  size  mean / median      = 1.609 / 1.0
+  size  mean / median      = 1.6 / 1
   size distribution (size: count):
-    size   1 : 678
-    size   2 : 339
-    size   3 : 136
-    size   4 : 28
-    size   5 : 6
+    size   1 : 1076
+    size   2 : 538
+    size   3 : 209
+    size   4 : 46
+    size   5 : 7
     size   6 : 1
 
 [Distribution Match]
-  cluster count diff       = 206  (predicted - truth)
-  size-distribution L1     = 392
+  cluster count diff       = 382  (predicted - truth)
+  size-distribution L1     = 748
 
 [Pair-based Metrics]
-  TP                       = 609
-  FP                       = 14
-  FN                       = 381
-  Linked Pairs (L)         = 623
-  Expected Pairs (E)       = 990
-  Precision                = 0.9775
-  Recall                   = 0.6152
-  F1                       = 0.7551
+  TP                       = 865
+  FP                       = 10
+  FN                       = 661
+  Linked Pairs (L)         = 875
+  Expected Pairs (E)       = 1526
+  Precision                = 0.9886
+  Recall                   = 0.5668
+  F1                       = 0.7205
 
 [Timings (seconds)]
-  recursive                = 0.389
-  filter                   = 0.044
-  cluster                  = 0.107
+  recursive                = 0.626
+  filter                   = 0.093
+  cluster                  = 0.225
 
 ========================================================================

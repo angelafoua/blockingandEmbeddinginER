@@ -22,52 +22,52 @@
   arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 0.75}
 
 [Records]
-  total                    = 1912
-  unique                   = 1912
+  total                    = 3004
+  unique                   = 3004
 
 [Predicted Clusters]
-  total                    = 1207
-  multi-record             = 584
-  singletons               = 623
+  total                    = 1967
+  multi-record             = 859
+  singletons               = 1108
   size  min / max          = 1 / 6
-  size  mean / median      = 1.584 / 1
+  size  mean / median      = 1.527 / 1
   size distribution (size: count):
-    size   1 : 623
-    size   2 : 480
-    size   3 : 91
-    size   4 : 10
+    size   1 : 1108
+    size   2 : 702
+    size   3 : 142
+    size   4 : 11
     size   5 : 2
-    size   6 : 1
+    size   6 : 2
 
 [Truth Clusters]  (../truthABCgoodDQ.txt)
-  total                    = 1188
+  total                    = 1877
   size  min / max          = 1 / 6
-  size  mean / median      = 1.609 / 1.0
+  size  mean / median      = 1.6 / 1
   size distribution (size: count):
-    size   1 : 678
-    size   2 : 339
-    size   3 : 136
-    size   4 : 28
-    size   5 : 6
+    size   1 : 1076
+    size   2 : 538
+    size   3 : 209
+    size   4 : 46
+    size   5 : 7
     size   6 : 1
 
 [Distribution Match]
-  cluster count diff       = 19  (predicted - truth)
-  size-distribution L1     = 263
+  cluster count diff       = 90  (predicted - truth)
+  size-distribution L1     = 304
 
 [Pair-based Metrics]
-  TP                       = 717
-  FP                       = 131
-  FN                       = 273
-  Linked Pairs (L)         = 848
-  Expected Pairs (E)       = 990
-  Precision                = 0.8455
-  Recall                   = 0.7242
-  F1                       = 0.7802
+  TP                       = 1043
+  FP                       = 201
+  FN                       = 483
+  Linked Pairs (L)         = 1244
+  Expected Pairs (E)       = 1526
+  Precision                = 0.8384
+  Recall                   = 0.6835
+  F1                       = 0.7531
 
 [Timings (seconds)]
-  recursive                = 1.531
-  filter                   = 0.241
-  cluster                  = 0.081
+  recursive                = 2.614
+  filter                   = 0.441
+  cluster                  = 0.174
 
 ========================================================================

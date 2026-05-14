@@ -6,7 +6,7 @@
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S5G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -19,5 +19,5 @@
     "7"
   ],
   "returncode": 0,
-  "wallclock_s": 26.282104015350342
+  "wallclock_s": 41.409393072128296
 }
