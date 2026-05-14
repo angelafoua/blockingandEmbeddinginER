@@ -1,23 +1,23 @@
 {
   "group": "E_top_k",
-  "config_id": "k=3",
-  "label": "top_k=3",
+  "config_id": "k=2",
+  "label": "top_k=2",
   "cmd": [
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S7GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
-    "/home/user/blockingandEmbeddinginER/RESULTS/runs/E_top_k/k=3/clusters.json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/E_top_k/k=2/clusters.json",
     "--top-k",
-    "3"
+    "2"
   ],
   "extra_args": [
     "--top-k",
-    "3"
+    "2"
   ],
   "returncode": 0,
-  "wallclock_s": 26.211674213409424
+  "wallclock_s": 28.835051774978638
 }
