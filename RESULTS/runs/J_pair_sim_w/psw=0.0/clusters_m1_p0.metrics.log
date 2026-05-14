@@ -1,0 +1,92 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 5
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 0.2
+  min_block_size           = 2
+  filter_mode              = size
+  weight_size              = 0.0
+  weight_shared            = 0.0
+  weight_tokenlen          = 0.0
+  cluster_on               = final
+  arcs_weighting           = uniform
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 0.0}
+
+[Records]
+  total                    = 2912
+  unique                   = 2912
+
+[Predicted Clusters]
+  total                    = 833
+  multi-record             = 457
+  singletons               = 376
+  size  min / max          = 1 / 475
+  size  mean / median      = 3.496 / 2
+  size distribution (size: count):
+    size   1 : 376
+    size   2 : 181
+    size   3 : 100
+    size   4 : 47
+    size   5 : 43
+    size   6 : 21
+    size   7 : 13
+    size   8 : 12
+    size   9 : 8
+    size  10 : 4
+    size  11 : 4
+    size  12 : 1
+    size  13 : 5
+    size  14 : 1
+    size  16 : 3
+    size  20 : 2
+    size  22 : 2
+    size  23 : 1
+    size  26 : 1
+    size  27 : 1
+    size  29 : 2
+    size  34 : 2
+    size  42 : 1
+    size  60 : 1
+    size 475 : 1
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 1827
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.594 / 1
+  size distribution (size: count):
+    size   1 : 1056
+    size   2 : 516
+    size   3 : 205
+    size   4 : 42
+    size   5 : 7
+    size   6 : 1
+
+[Distribution Match]
+  cluster count diff       = -994  (predicted - truth)
+  size-distribution L1     = 1246
+
+[Pair-based Metrics]
+  TP                       = 1343
+  FP                       = 121280
+  FN                       = 125
+  Linked Pairs (L)         = 122623
+  Expected Pairs (E)       = 1468
+  Precision                = 0.011
+  Recall                   = 0.9149
+  F1                       = 0.0216
+
+[Timings (seconds)]
+  recursive                = 0.526
+  filter                   = 0.07
+  cluster                  = 0.098
+
+========================================================================

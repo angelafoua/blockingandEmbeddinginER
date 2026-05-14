@@ -1,0 +1,99 @@
+{
+  "config": {
+    "blocking_mode": "default",
+    "do_merge": true,
+    "do_purge": false,
+    "max_recursion_depth": 5,
+    "min_intra_freq": 2,
+    "top_k": 3,
+    "tau": 0.2,
+    "min_block_size": 2,
+    "filter_mode": "size",
+    "weight_size": 0.0,
+    "weight_shared": 0.0,
+    "weight_tokenlen": 0.0,
+    "cluster_on": "final",
+    "arcs_weighting": "uniform",
+    "density_floor": 0.0,
+    "density_min_size": 3,
+    "arcs_factors": {
+      "length_weight": 0.0,
+      "numeric_factor": 1.0,
+      "word_factor": 1.0,
+      "density_weight": 0.0,
+      "density_sample_cap": 200,
+      "pair_sim_weight": 0.0
+    }
+  },
+  "n_records_total": 2912,
+  "n_unique_records": 2912,
+  "predicted_clusters": {
+    "n_total": 833,
+    "n_multi": 457,
+    "n_singletons": 376,
+    "min_size": 1,
+    "max_size": 475,
+    "mean_size": 3.496,
+    "median_size": 2,
+    "size_distribution": {
+      "1": 376,
+      "2": 181,
+      "3": 100,
+      "4": 47,
+      "5": 43,
+      "6": 21,
+      "7": 13,
+      "8": 12,
+      "9": 8,
+      "10": 4,
+      "11": 4,
+      "12": 1,
+      "13": 5,
+      "14": 1,
+      "16": 3,
+      "20": 2,
+      "22": 2,
+      "23": 1,
+      "26": 1,
+      "27": 1,
+      "29": 2,
+      "34": 2,
+      "42": 1,
+      "60": 1,
+      "475": 1
+    }
+  },
+  "truth_clusters": {
+    "truth_file": "../truthABCgoodDQ.txt",
+    "n_total": 1827,
+    "min_size": 1,
+    "max_size": 6,
+    "mean_size": 1.594,
+    "median_size": 1,
+    "size_distribution": {
+      "1": 1056,
+      "2": 516,
+      "3": 205,
+      "4": 42,
+      "5": 7,
+      "6": 1
+    }
+  },
+  "pair_metrics": {
+    "TP": 1343,
+    "E": 1468,
+    "L": 122623,
+    "FP": 121280,
+    "FN": 125,
+    "precision": 0.011,
+    "recall": 0.9149,
+    "f1": 0.0216
+  },
+  "size_distribution_l1": 1246,
+  "cluster_count_diff": -994,
+  "timings_seconds": {
+    "recursive": 0.526,
+    "filter": 0.07,
+    "cluster": 0.098
+  }
+}

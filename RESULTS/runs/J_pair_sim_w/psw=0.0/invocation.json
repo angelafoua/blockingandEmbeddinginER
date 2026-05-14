@@ -1,23 +1,23 @@
 {
   "group": "J_pair_sim_w",
-  "config_id": "psw=0.25",
-  "label": "pair_sim_weight=0.25",
+  "config_id": "psw=0.0",
+  "label": "pair_sim_weight=0.0",
   "cmd": [
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S7GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
-    "/home/user/blockingandEmbeddinginER/RESULTS/runs/J_pair_sim_w/psw=0.25/clusters.json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/J_pair_sim_w/psw=0.0/clusters.json",
     "--arcs-pair-sim-weight",
-    "0.25"
+    "0.0"
   ],
   "extra_args": [
     "--arcs-pair-sim-weight",
-    "0.25"
+    "0.0"
   ],
   "returncode": 0,
-  "wallclock_s": 25.400688409805298
+  "wallclock_s": 28.949111461639404
 }
