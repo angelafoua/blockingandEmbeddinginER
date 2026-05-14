@@ -4,17 +4,17 @@
 
 [Configuration]
   blocking_mode            = default
-  do_merge                 = True
+  do_merge                 = False
   do_purge                 = True
   max_recursion_depth      = 5
   min_intra_freq           = 2
   top_k                    = 3
   tau                      = 0.2
   min_block_size           = 2
-  filter_mode              = composite
-  weight_size              = 1.0
-  weight_shared            = 1.0
-  weight_tokenlen          = 1.0
+  filter_mode              = keylen
+  weight_size              = 0.0
+  weight_shared            = 0.0
+  weight_tokenlen          = 0.0
   cluster_on               = final
   arcs_weighting           = uniform
   density_floor            = 0.0
@@ -65,8 +65,8 @@
   F1                       = 0.7015
 
 [Timings (seconds)]
-  recursive                = 0.492
-  filter                   = 0.051
-  cluster                  = 0.15
+  recursive                = 0.549
+  filter                   = 0.047
+  cluster                  = 0.149
 
 ========================================================================
