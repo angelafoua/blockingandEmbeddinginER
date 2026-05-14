@@ -1,23 +1,23 @@
 {
   "group": "K_min_block_size",
-  "config_id": "mbs=3",
-  "label": "min_block_size=3",
+  "config_id": "mbs=2",
+  "label": "min_block_size=2",
   "cmd": [
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S7GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
-    "/home/user/blockingandEmbeddinginER/RESULTS/runs/K_min_block_size/mbs=3/clusters.json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/K_min_block_size/mbs=2/clusters.json",
     "--min-block-size",
-    "3"
+    "2"
   ],
   "extra_args": [
     "--min-block-size",
-    "3"
+    "2"
   ],
   "returncode": 0,
-  "wallclock_s": 26.200942277908325
+  "wallclock_s": 28.582369089126587
 }
