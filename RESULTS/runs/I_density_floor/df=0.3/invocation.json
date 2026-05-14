@@ -1,0 +1,23 @@
+{
+  "group": "I_density_floor",
+  "config_id": "df=0.3",
+  "label": "density_floor=0.3",
+  "cmd": [
+    "/usr/local/bin/python",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S1G.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/I_density_floor/df=0.3/clusters.json",
+    "--density-floor",
+    "0.3"
+  ],
+  "extra_args": [
+    "--density-floor",
+    "0.3"
+  ],
+  "returncode": 0,
+  "wallclock_s": 22.48255753517151
+}

@@ -1,0 +1,66 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = False
+  do_purge                 = False
+  max_recursion_depth      = 5
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 0.2
+  min_block_size           = 4
+  filter_mode              = size
+  weight_size              = 0.0
+  weight_shared            = 0.0
+  weight_tokenlen          = 0.0
+  cluster_on               = final
+  arcs_weighting           = uniform
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
+
+[Records]
+  total                    = 50
+  unique                   = 50
+
+[Predicted Clusters]
+  total                    = 50
+  multi-record             = 0
+  singletons               = 50
+  size  min / max          = 1 / 1
+  size  mean / median      = 1 / 1.0
+  size distribution (size: count):
+    size   1 : 50
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 30
+  size  min / max          = 1 / 4
+  size  mean / median      = 1.667 / 1.0
+  size distribution (size: count):
+    size   1 : 16
+    size   2 : 9
+    size   3 : 4
+    size   4 : 1
+
+[Distribution Match]
+  cluster count diff       = 20  (predicted - truth)
+  size-distribution L1     = 48
+
+[Pair-based Metrics]
+  TP                       = 0
+  FP                       = 0
+  FN                       = 27
+  Linked Pairs (L)         = 0
+  Expected Pairs (E)       = 27
+  Precision                = 1.0
+  Recall                   = 0.0
+  F1                       = 0.0
+
+[Timings (seconds)]
+  recursive                = 0.356
+  filter                   = 0.037
+  cluster                  = 0.0
+
+========================================================================

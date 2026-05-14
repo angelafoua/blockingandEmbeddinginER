@@ -1,0 +1,1004 @@
+{
+  "metadata": {
+    "blocking_mode": "default",
+    "do_merge": false,
+    "do_purge": false,
+    "max_recursion_depth": 5,
+    "min_intra_freq": 2,
+    "top_k": 3,
+    "tau": 1.0,
+    "min_block_size": 2,
+    "filter_mode": "size",
+    "weight_size": 0.0,
+    "weight_shared": 0.0,
+    "weight_tokenlen": 0.0,
+    "cluster_on": "final",
+    "arcs_weighting": "idf",
+    "density_floor": 0.0,
+    "density_min_size": 3,
+    "arcs_factors": {
+      "length_weight": 0.0,
+      "numeric_factor": 1.0,
+      "word_factor": 1.0,
+      "density_weight": 0.0,
+      "density_sample_cap": 200,
+      "pair_sim_weight": 1.0
+    }
+  },
+  "n_clusters": 30,
+  "clusters": [
+    {
+      "cluster_id": 0,
+      "size": 3,
+      "records": [
+        {
+          "refID": "A770538",
+          "tokens": [
+            "DONALD",
+            "AARON",
+            "DWIGHT",
+            "6965",
+            "WEST",
+            "RD",
+            "WALNUT",
+            "COVE",
+            "NC",
+            "27052",
+            "131532482"
+          ]
+        },
+        {
+          "refID": "A816319",
+          "tokens": [
+            "AARON",
+            "DONALD",
+            "DWIGHT",
+            "6965",
+            "WEST",
+            "RD",
+            "WALNUT",
+            "COVE",
+            "NC",
+            "27052",
+            "131532482"
+          ]
+        },
+        {
+          "refID": "A882820",
+          "tokens": [
+            "DONALD",
+            "AARON",
+            "DWIGHT",
+            "6965",
+            "WEST",
+            "RD",
+            "WALNUT",
+            "COVE",
+            "NC",
+            "27052",
+            "131532482"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 1,
+      "size": 3,
+      "records": [
+        {
+          "refID": "A780828",
+          "tokens": [
+            "LORI",
+            "AARON",
+            "FRANKLIN",
+            "5010",
+            "TUTELO",
+            "TRL",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27127",
+            "214839125"
+          ]
+        },
+        {
+          "refID": "A887611",
+          "tokens": [
+            "LORI",
+            "AARON",
+            "FRANKLIN",
+            "5010",
+            "TUTELO",
+            "TRL",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27127",
+            "214839125"
+          ]
+        },
+        {
+          "refID": "A970774",
+          "tokens": [
+            "LORI",
+            "AARON",
+            "FRANKLIN",
+            "5010",
+            "TUTELO",
+            "TRL",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27127",
+            "214839125"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 2,
+      "size": 3,
+      "records": [
+        {
+          "refID": "A814320",
+          "tokens": [
+            "NENA",
+            "ABAIIKWECHEGH",
+            "4477",
+            "LOCHURST",
+            "DR",
+            "PFAFFTOWN",
+            "NC",
+            "27040",
+            "780118579"
+          ]
+        },
+        {
+          "refID": "A824044",
+          "tokens": [
+            "NENA",
+            "ABAIIKWECHEGH",
+            "4477",
+            "LOCHURST",
+            "DR",
+            "PFAFFTOWN",
+            "NC",
+            "27040",
+            "780118579"
+          ]
+        },
+        {
+          "refID": "A935026",
+          "tokens": [
+            "NENA",
+            "ABAIIKWECHEGH",
+            "4477",
+            "LOCHURST",
+            "DR",
+            "PFAFFTOWN",
+            "NC",
+            "27040",
+            "780118579"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 3,
+      "size": 3,
+      "records": [
+        {
+          "refID": "A830349",
+          "tokens": [
+            "LLOYD",
+            "AARON",
+            "DEAN",
+            "2475",
+            "SPICEWOOD",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27106",
+            "456182098"
+          ]
+        },
+        {
+          "refID": "A956423",
+          "tokens": [
+            "LLOYD",
+            "AAARON",
+            "DEAN",
+            "2475",
+            "SPICEWOOD",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27106",
+            "456182098"
+          ]
+        },
+        {
+          "refID": "A985464",
+          "tokens": [
+            "LLOYD",
+            "AARON",
+            "DEAN",
+            "2475",
+            "SPICEWOOD",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27106"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 4,
+      "size": 3,
+      "records": [
+        {
+          "refID": "A915661",
+          "tokens": [
+            "NATHEN",
+            "ABADIE",
+            "HARRY",
+            "308",
+            "CENTURY",
+            "BLVD",
+            "KERNERSVILLE",
+            "NC",
+            "27284",
+            "601851792"
+          ]
+        },
+        {
+          "refID": "A922259",
+          "tokens": [
+            "NATHEN",
+            "ABADIE",
+            "HARRY",
+            "308",
+            "CENTURY",
+            "BLVD",
+            "KERNERSVILLE",
+            "NC",
+            "27284",
+            "601851792"
+          ]
+        },
+        {
+          "refID": "A992523",
+          "tokens": [
+            "NATHEN",
+            "ABADIE",
+            "HARRY",
+            "308",
+            "CENTURY",
+            "BLVD",
+            "KERNERSVILLE",
+            "NC",
+            "27284",
+            "601851792"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 5,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A750205",
+          "tokens": [
+            "BRIAN",
+            "ABADIR",
+            "FAROUK",
+            "3555",
+            "SYCAMORE",
+            "TRAIL",
+            "LN",
+            "302",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27103",
+            "123315321"
+          ]
+        },
+        {
+          "refID": "A942770",
+          "tokens": [
+            "BRIAN",
+            "ABADIR",
+            "FAROUK",
+            "3555",
+            "SYCAMORE",
+            "TRAIL",
+            "LN",
+            "302",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27103",
+            "123315321"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 6,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A755471",
+          "tokens": [
+            "MYRA",
+            "AARGAARDESPERSEN",
+            "1224",
+            "MAGNOLIA",
+            "ST",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27103",
+            "117158521"
+          ]
+        },
+        {
+          "refID": "A912696",
+          "tokens": [
+            "MYRA",
+            "AAARGAARDESPERSEN",
+            "1224",
+            "MAGNOLIA",
+            "ST",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27103",
+            "117158521"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 7,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A776838",
+          "tokens": [
+            "DAVIS",
+            "AAARON",
+            "SCOTT",
+            "3211",
+            "KINNAMON",
+            "RD",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "834596144"
+          ]
+        },
+        {
+          "refID": "A844925",
+          "tokens": [
+            "DAVIS",
+            "AARON",
+            "SCOTT",
+            "3211",
+            "KINNAMON",
+            "RD",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "834596144"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 8,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A793513",
+          "tokens": [
+            "TERESA",
+            "ABARCA",
+            "SPAINHOUR",
+            "2609",
+            "W",
+            "MOUNTAIN",
+            "ST",
+            "KERNERSVILLE",
+            "NC",
+            "27284",
+            "917102100"
+          ]
+        },
+        {
+          "refID": "A938666",
+          "tokens": [
+            "TERESA",
+            "ABARCA",
+            "SPAINHOUR",
+            "2609",
+            "W",
+            "MOUNTAIN",
+            "ST",
+            "KERNERSVILLE",
+            "NC",
+            "27284",
+            "917102100"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 9,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A799281",
+          "tokens": [
+            "PHYLLIS",
+            "AARON",
+            "CAROL",
+            "2558",
+            "TANTELON",
+            "PL",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27127",
+            "925887481"
+          ]
+        },
+        {
+          "refID": "A926684",
+          "tokens": [
+            "ROBERT",
+            "AARON",
+            "EARL",
+            "2558",
+            "TANTELON",
+            "PL",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27127",
+            "811169183"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 10,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A819955",
+          "tokens": [
+            "JEREMY",
+            "AARON",
+            "TYLER",
+            "3211",
+            "KINNAMON",
+            "RD",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "363197202"
+          ]
+        },
+        {
+          "refID": "A975276",
+          "tokens": [
+            "JEREMY",
+            "AAARON",
+            "TYLER",
+            "3211",
+            "KINNAMON",
+            "RD",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "363197202"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 11,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A824917",
+          "tokens": [
+            "ANDREW",
+            "AARON",
+            "STEPHEN",
+            "2475",
+            "SPICEWOOD",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27106",
+            "601706106"
+          ]
+        },
+        {
+          "refID": "A875214",
+          "tokens": [
+            "ANDREEW",
+            "AARON",
+            "STEPHEN",
+            "2475",
+            "SPICEWOOD",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27106",
+            "601706106"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 12,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A867783",
+          "tokens": [
+            "NAOMI",
+            "AARON",
+            "AUDREY",
+            "624",
+            "N",
+            "STRATFORD",
+            "RD",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104"
+          ]
+        },
+        {
+          "refID": "A921659",
+          "tokens": [
+            "NAOMI",
+            "AARON",
+            "AUDREY",
+            "624",
+            "N",
+            "STRATFORD",
+            "RD",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "889226597"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 13,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A905248",
+          "tokens": [
+            "MICHAEL",
+            "AARON",
+            "SCOT",
+            "1010",
+            "PALISADE",
+            "CT",
+            "MARTINEZ",
+            "CA",
+            "94553",
+            "642194591"
+          ]
+        },
+        {
+          "refID": "A950657",
+          "tokens": [
+            "MICHAEL",
+            "AARON",
+            "SCOT",
+            "176",
+            "NOTTIDGE",
+            "CT",
+            "CLEMMONS",
+            "NC",
+            "27012",
+            "642194591"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 14,
+      "size": 2,
+      "records": [
+        {
+          "refID": "A920554",
+          "tokens": [
+            "TIMOTHY",
+            "AARON",
+            "RODRECUS",
+            "3812",
+            "COUNTRY",
+            "CLUB",
+            "RD",
+            "A",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "613874562"
+          ]
+        },
+        {
+          "refID": "A934767",
+          "tokens": [
+            "TIMOTHY",
+            "AARON",
+            "RODRECUS",
+            "3812",
+            "COUNTRY",
+            "CLUB",
+            "RD",
+            "A",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "613874562"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 15,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A767794",
+          "tokens": [
+            "TIFFANY",
+            "AARON",
+            "5122",
+            "BURROAK",
+            "CT",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27106",
+            "937302822"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 16,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A812219",
+          "tokens": [
+            "CELIA",
+            "AARON",
+            "1106",
+            "LASSEN",
+            "DR",
+            "HANFORD",
+            "CA",
+            "93230",
+            "344374232"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 17,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A813025",
+          "tokens": [
+            "ALLEN",
+            "AARON",
+            "IKAIKA",
+            "3830",
+            "COUNTRY",
+            "CLUB",
+            "RD",
+            "J",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 18,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A864729",
+          "tokens": [
+            "REBA",
+            "AARON",
+            "PEDDLE",
+            "516",
+            "HEATHERTON",
+            "LN",
+            "RURAL",
+            "HALL",
+            "NC",
+            "27045"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 19,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A869762",
+          "tokens": [
+            "GREGORY",
+            "AARON",
+            "A",
+            "7514",
+            "DIVALDI",
+            "ST",
+            "LEWISVILLE",
+            "NC",
+            "27023",
+            "672522262"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 20,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A914099",
+          "tokens": [
+            "AARON",
+            "D",
+            "1117",
+            "E",
+            "SEVENTEENTH",
+            "ST",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27105",
+            "636328781"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 21,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A926782",
+          "tokens": [
+            "MONICA",
+            "AARON",
+            "SMITH",
+            "624",
+            "N",
+            "STRATFORD",
+            "RD",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27104",
+            "378437367"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 22,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A934513",
+          "tokens": [
+            "TRACEY",
+            "AARON",
+            "LEIGH",
+            "176",
+            "NOTTIDGE",
+            "CT",
+            "CLEMMONS",
+            "NC",
+            "27012",
+            "954451341"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 23,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A944634",
+          "tokens": [
+            "IAN",
+            "AADLAND",
+            "LARS",
+            "29021",
+            "HIGH",
+            "SIERRA",
+            "TRL",
+            "SANTA",
+            "CLARITA",
+            "CA",
+            "91390",
+            "490462048"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 24,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A948701",
+          "tokens": [
+            "VERONICA",
+            "AARON",
+            "OLIVIA",
+            "3401",
+            "LOCHURST",
+            "CT",
+            "PFAFFTOWN",
+            "NC",
+            "27040",
+            "335394837"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 25,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A956296",
+          "tokens": [
+            "LLOYD",
+            "AARON",
+            "D",
+            "2475",
+            "SPICEWOOD",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27106",
+            "456182098"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 26,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A960838",
+          "tokens": [
+            "VELMA",
+            "AARON",
+            "JACKSON",
+            "2599",
+            "SHIELDALE",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27107",
+            "559644215"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 27,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A963930",
+          "tokens": [
+            "CHRISTOPHER",
+            "AARON",
+            "2013",
+            "WILLIAMSBURG",
+            "MANOR",
+            "CT",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27103",
+            "741757354"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 28,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A974515",
+          "tokens": [
+            "BRYAN",
+            "ABADIE",
+            "QUINN",
+            "2334",
+            "WALKER",
+            "AVE",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27103",
+            "223533200"
+          ]
+        }
+      ]
+    },
+    {
+      "cluster_id": 29,
+      "size": 1,
+      "records": [
+        {
+          "refID": "A986935",
+          "tokens": [
+            "STACY",
+            "AARON",
+            "LASONDO",
+            "1329",
+            "C",
+            "E",
+            "GRAY",
+            "DR",
+            "WINSTON",
+            "SALEM",
+            "NC",
+            "27101",
+            "404974753"
+          ]
+        }
+      ]
+    }
+  ]
+}

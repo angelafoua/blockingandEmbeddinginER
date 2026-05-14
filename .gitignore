@@ -3,3 +3,8 @@ __pycache__/
 clusters*.json
 *.metrics.json
 *.metrics.log
+
+# Experiment-suite outputs: keep aggregated artifacts and per-run logs.
+!RESULTS/**/clusters*.json
+!RESULTS/**/*.metrics.json
+!RESULTS/**/*.metrics.log
