@@ -251,20 +251,54 @@ def remove_high_frequency_tokens(refDict, tokenFreqDict, max_frequency=60):
     return cleaned, noisy
 
 
-def filter_top_k_smallest(blocks, k=3, min_block_size=2):
-    """Per-record top-k smallest filter (Block Filtering, Papadakis et al.)."""
+def _key_token_count(key):
+    """Number of distinct tokens in a block key.
+
+    Initial blocks use a string key (a single token); refined / merged
+    blocks use a tuple of tokens. Anything else is treated as 1 token.
+    """
+    if isinstance(key, tuple):
+        return len(key)
+    return 1
+
+
+def filter_top_k_smallest(blocks, k=3, min_block_size=2, filter_mode="size"):
+    """Per-record top-k filter (Block Filtering, Papadakis et al.).
+
+    `filter_mode` controls the ranking used to pick a record's top-k blocks:
+      - "size":        keep the k smallest blocks (classic Papadakis).
+      - "specificity": rank by |R_B| / |K|, so a block grown to a long
+                       key tuple is treated as "as specific as" a much
+                       smaller block under a single-token key.
+      - "keylen":      rank by (-|K|, |R_B|): pick the deepest-refined
+                       blocks first, breaking ties on size.
+    """
     from collections import defaultdict
+
+    if filter_mode == "size":
+        def rank(size, klen):
+            return (size,)
+    elif filter_mode == "specificity":
+        def rank(size, klen):
+            return (size / max(klen, 1), -klen, size)
+    elif filter_mode == "keylen":
+        def rank(size, klen):
+            return (-klen, size)
+    else:
+        raise ValueError(f"Unknown filter_mode: {filter_mode!r}")
 
     record_to_blocks = defaultdict(list)
     for key, refs in blocks.items():
         size = len(refs)
+        klen = _key_token_count(key)
+        score = rank(size, klen)
         for refID in refs:
-            record_to_blocks[refID].append((size, key))
+            record_to_blocks[refID].append((score, key))
 
     keep = defaultdict(set)
-    for refID, sized_keys in record_to_blocks.items():
-        sized_keys.sort(key=lambda x: x[0])
-        for _, key in sized_keys[:k]:
+    for refID, scored_keys in record_to_blocks.items():
+        scored_keys.sort(key=lambda x: x[0])
+        for _, key in scored_keys[:k]:
             keep[key].add(refID)
 
     result = {}
@@ -1071,7 +1105,7 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  truth_file_path=None, write_metrics=True,
                  max_block_pair_cost=None,
                  hierarchical=False, blocking_mode="default",
-                 arcs_factors=None):
+                 arcs_factors=None, filter_mode="size"):
     """Run recursive blocking + filter + clustering with given ablation flags.
 
     When hierarchical=True, `initial_blocks` is treated as already-final
@@ -1119,7 +1153,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
 
     t0 = time.time()
     blocks_for_cluster = filter_top_k_smallest(blocks_for_cluster, k=top_k,
-                                               min_block_size=min_block_size)
+                                               min_block_size=min_block_size,
+                                               filter_mode=filter_mode)
     t_filter = time.time() - t0
 
     t0 = time.time()
@@ -1142,6 +1177,7 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
         "top_k": top_k,
         "tau": tau,
         "min_block_size": min_block_size,
+        "filter_mode": filter_mode,
         "cluster_on": cluster_on,
         "arcs_weighting": arcs_weighting,
         "density_floor": density_floor,
@@ -1313,6 +1349,17 @@ def _parse_args():
                         "weighted equally (original ARCS behaviour).")
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
+    p.add_argument("--filter-mode",
+                   choices=["size", "specificity", "keylen"],
+                   default="size",
+                   help="Ranking used by Block Filtering to pick a "
+                        "record's top-k blocks. 'size' (default): keep "
+                        "the k smallest blocks (classic Papadakis). "
+                        "'specificity': rank by |R_B|/|K|, so a large "
+                        "block grown to a long key tuple is treated as "
+                        "specific as a much smaller single-token block. "
+                        "'keylen': rank by (-|K|, |R_B|), keeping the "
+                        "deepest-refined blocks first.")
     p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
                    help="Which recursion snapshot feeds clustering: the "
                         "final state (default) or the peak-block-count state.")
@@ -1425,6 +1472,7 @@ if __name__ == "__main__":
               f"(== unique tokens after stop-word removal)")
         print(f"  min_block_size      = {args.min_block_size}")
         print(f"  top_k               = {args.top_k}")
+        print(f"  filter_mode         = {args.filter_mode}")
         print(f"  tau                 = {args.tau}")
         print(f"  arcs_weighting      = {args.arcs_weighting}")
         print(f"  density_floor       = {args.density_floor} "
@@ -1456,6 +1504,7 @@ if __name__ == "__main__":
         print(f"  exclude_numeric     = {not args.include_numeric}")
         print(f"  min_block_size      = {args.min_block_size}")
         print(f"  top_k               = {args.top_k}")
+        print(f"  filter_mode         = {args.filter_mode}")
         print(f"  tau                 = {args.tau}")
         print(f"  arcs_weighting      = {args.arcs_weighting}")
         print(f"  density_floor       = {args.density_floor} "
@@ -1534,7 +1583,8 @@ if __name__ == "__main__":
                             max_block_pair_cost=args.max_block_pair_cost,
                             hierarchical=args.hierarchical_blocking,
                             blocking_mode=blocking_mode,
-                            arcs_factors=arcs_factors)
+                            arcs_factors=arcs_factors,
+                            filter_mode=args.filter_mode)
                for (m, p) in configs]
 
     print("\n\n" + "=" * 110)
@@ -1549,7 +1599,8 @@ if __name__ == "__main__":
         print(f"mode={blocking_mode}, init_df_max={init_df_max}, "
               f"max_recursion_depth={max_recursion_depth}, "
               f"min_intra_freq={min_intra_freq}, tau={args.tau}, "
-              f"top_k={args.top_k}, min_block_size={args.min_block_size}, "
+              f"top_k={args.top_k}, filter_mode={args.filter_mode}, "
+              f"min_block_size={args.min_block_size}, "
               f"arcs_weighting={args.arcs_weighting}, "
               f"density_floor={args.density_floor}, "
               f"cluster_on={args.cluster_on}")
