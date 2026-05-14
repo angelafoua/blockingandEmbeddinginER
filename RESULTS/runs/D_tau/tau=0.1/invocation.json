@@ -3,10 +3,10 @@
   "config_id": "tau=0.1",
   "label": "tau=0.1",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -19,5 +19,5 @@
     "0.1"
   ],
   "returncode": 0,
-  "wallclock_s": 22.6667263507843
+  "wallclock_s": 32.66816258430481
 }

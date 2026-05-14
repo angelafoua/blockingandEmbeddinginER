@@ -3,10 +3,10 @@
   "config_id": "w=shared_tokenlen",
   "label": "composite/shared_tokenlen",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -31,5 +31,5 @@
     "1.0"
   ],
   "returncode": 0,
-  "wallclock_s": 22.44298481941223
+  "wallclock_s": 32.27053618431091
 }

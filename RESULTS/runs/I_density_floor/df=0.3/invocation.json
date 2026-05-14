@@ -3,10 +3,10 @@
   "config_id": "df=0.3",
   "label": "density_floor=0.3",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -19,5 +19,5 @@
     "0.3"
   ],
   "returncode": 0,
-  "wallclock_s": 22.48255753517151
+  "wallclock_s": 32.49242901802063
 }

@@ -3,10 +3,10 @@
   "config_id": "w=size_shared",
   "label": "composite/size_shared",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -31,5 +31,5 @@
     "0.0"
   ],
   "returncode": 0,
-  "wallclock_s": 22.519301176071167
+  "wallclock_s": 36.31786108016968
 }

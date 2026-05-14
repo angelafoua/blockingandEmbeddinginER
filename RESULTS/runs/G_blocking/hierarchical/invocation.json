@@ -3,10 +3,10 @@
   "config_id": "hierarchical",
   "label": "hierarchical blocking",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -17,5 +17,5 @@
     "--hierarchical-blocking"
   ],
   "returncode": 0,
-  "wallclock_s": 5.658923864364624
+  "wallclock_s": 8.554813623428345
 }
