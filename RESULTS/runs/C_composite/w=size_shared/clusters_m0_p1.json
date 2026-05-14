@@ -1,7 +1,7 @@
 {
   "metadata": {
     "blocking_mode": "default",
-    "do_merge": true,
+    "do_merge": false,
     "do_purge": true,
     "max_recursion_depth": 5,
     "min_intra_freq": 2,
@@ -10,8 +10,8 @@
     "min_block_size": 2,
     "filter_mode": "composite",
     "weight_size": 1.0,
-    "weight_shared": 0.0,
-    "weight_tokenlen": 1.0,
+    "weight_shared": 1.0,
+    "weight_tokenlen": 0.0,
     "cluster_on": "final",
     "arcs_weighting": "uniform",
     "density_floor": 0.0,
