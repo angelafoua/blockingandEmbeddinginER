@@ -1,0 +1,70 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 5
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 0.05
+  min_block_size           = 2
+  filter_mode              = size
+  weight_size              = 0.0
+  weight_shared            = 0.0
+  weight_tokenlen          = 0.0
+  cluster_on               = final
+  arcs_weighting           = uniform
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
+
+[Records]
+  total                    = 50
+  unique                   = 50
+
+[Predicted Clusters]
+  total                    = 23
+  multi-record             = 13
+  singletons               = 10
+  size  min / max          = 1 / 8
+  size  mean / median      = 2.174 / 2
+  size distribution (size: count):
+    size   1 : 10
+    size   2 : 5
+    size   3 : 6
+    size   4 : 1
+    size   8 : 1
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 30
+  size  min / max          = 1 / 4
+  size  mean / median      = 1.667 / 1.0
+  size distribution (size: count):
+    size   1 : 16
+    size   2 : 9
+    size   3 : 4
+    size   4 : 1
+
+[Distribution Match]
+  cluster count diff       = -7  (predicted - truth)
+  size-distribution L1     = 13
+
+[Pair-based Metrics]
+  TP                       = 27
+  FP                       = 30
+  FN                       = 0
+  Linked Pairs (L)         = 57
+  Expected Pairs (E)       = 27
+  Precision                = 0.4737
+  Recall                   = 1.0
+  F1                       = 0.6429
+
+[Timings (seconds)]
+  recursive                = 0.016
+  filter                   = 0.001
+  cluster                  = 0.002
+
+========================================================================
