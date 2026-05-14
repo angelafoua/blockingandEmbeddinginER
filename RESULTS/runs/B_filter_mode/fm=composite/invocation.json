@@ -1,16 +1,16 @@
 {
-  "group": "C_composite",
-  "config_id": "w=all_equal",
-  "label": "composite/all_equal",
+  "group": "B_filter_mode",
+  "config_id": "fm=composite",
+  "label": "filter_mode=composite",
   "cmd": [
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S7GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
-    "/home/user/blockingandEmbeddinginER/RESULTS/runs/C_composite/w=all_equal/clusters.json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/B_filter_mode/fm=composite/clusters.json",
     "--filter-mode",
     "composite",
     "--filter-weight-size",
@@ -31,5 +31,5 @@
     "1.0"
   ],
   "returncode": 0,
-  "wallclock_s": 27.339462280273438
+  "wallclock_s": 28.629939794540405
 }
