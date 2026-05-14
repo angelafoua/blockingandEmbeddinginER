@@ -262,28 +262,71 @@ def _key_token_count(key):
     return 1
 
 
-def filter_top_k_smallest(blocks, k=3, min_block_size=2, filter_mode="size"):
+def _key_mean_token_len(key):
+    """Mean character length of tokens in a block key."""
+    if isinstance(key, tuple):
+        if not key:
+            return 0.0
+        return sum(len(t) for t in key) / len(key)
+    return float(len(key))
+
+
+def filter_top_k_smallest(blocks, k=3, min_block_size=2, filter_mode="size",
+                          weight_size=0.0, weight_shared=0.0,
+                          weight_tokenlen=0.0):
     """Per-record top-k filter (Block Filtering, Papadakis et al.).
 
     `filter_mode` controls the ranking used to pick a record's top-k blocks:
       - "size":        keep the k smallest blocks (classic Papadakis).
-      - "specificity": rank by |R_B| / |K|, so a block grown to a long
-                       key tuple is treated as "as specific as" a much
-                       smaller block under a single-token key.
-      - "keylen":      rank by (-|K|, |R_B|): pick the deepest-refined
-                       blocks first, breaking ties on size.
+      - "specificity": rank by |R_B| / |K|.
+      - "keylen":      rank by (-|K|, |R_B|).
+      - "composite":   weighted linear combination of three normalized
+                       criteria. Each block contributes
+                          w_size     * norm(|R_B|)
+                        + w_shared   * (1 - norm(|K|))
+                        + w_tokenlen * (1 - norm(mean_len(K)))
+                       where norm is min-max scaling across the input
+                       block set. Smaller score = preferred. Set any
+                       weight to 0 to drop that criterion.
     """
     from collections import defaultdict
 
     if filter_mode == "size":
-        def rank(size, klen):
+        def rank(size, klen, tlen):
             return (size,)
     elif filter_mode == "specificity":
-        def rank(size, klen):
+        def rank(size, klen, tlen):
             return (size / max(klen, 1), -klen, size)
     elif filter_mode == "keylen":
-        def rank(size, klen):
+        def rank(size, klen, tlen):
             return (-klen, size)
+    elif filter_mode == "composite":
+        if weight_size <= 0 and weight_shared <= 0 and weight_tokenlen <= 0:
+            raise ValueError("filter_mode=composite requires at least one "
+                             "of weight_size / weight_shared / weight_tokenlen "
+                             "to be > 0.")
+        sizes = [len(refs) for refs in blocks.values()]
+        klens = [_key_token_count(key) for key in blocks]
+        tlens = [_key_mean_token_len(key) for key in blocks]
+        s_min, s_max = (min(sizes), max(sizes)) if sizes else (0, 0)
+        k_min, k_max = (min(klens), max(klens)) if klens else (0, 0)
+        t_min, t_max = (min(tlens), max(tlens)) if tlens else (0.0, 0.0)
+        s_span = s_max - s_min
+        k_span = k_max - k_min
+        t_span = t_max - t_min
+
+        def norm(x, lo, span):
+            return 0.0 if span == 0 else (x - lo) / span
+
+        def rank(size, klen, tlen):
+            score = 0.0
+            if weight_size > 0:
+                score += weight_size * norm(size, s_min, s_span)
+            if weight_shared > 0:
+                score += weight_shared * (1.0 - norm(klen, k_min, k_span))
+            if weight_tokenlen > 0:
+                score += weight_tokenlen * (1.0 - norm(tlen, t_min, t_span))
+            return (score, size, -klen)
     else:
         raise ValueError(f"Unknown filter_mode: {filter_mode!r}")
 
@@ -291,7 +334,8 @@ def filter_top_k_smallest(blocks, k=3, min_block_size=2, filter_mode="size"):
     for key, refs in blocks.items():
         size = len(refs)
         klen = _key_token_count(key)
-        score = rank(size, klen)
+        tlen = _key_mean_token_len(key)
+        score = rank(size, klen, tlen)
         for refID in refs:
             record_to_blocks[refID].append((score, key))
 
@@ -1105,7 +1149,8 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
                  truth_file_path=None, write_metrics=True,
                  max_block_pair_cost=None,
                  hierarchical=False, blocking_mode="default",
-                 arcs_factors=None, filter_mode="size"):
+                 arcs_factors=None, filter_mode="size",
+                 weight_size=0.0, weight_shared=0.0, weight_tokenlen=0.0):
     """Run recursive blocking + filter + clustering with given ablation flags.
 
     When hierarchical=True, `initial_blocks` is treated as already-final
@@ -1154,7 +1199,10 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
     t0 = time.time()
     blocks_for_cluster = filter_top_k_smallest(blocks_for_cluster, k=top_k,
                                                min_block_size=min_block_size,
-                                               filter_mode=filter_mode)
+                                               filter_mode=filter_mode,
+                                               weight_size=weight_size,
+                                               weight_shared=weight_shared,
+                                               weight_tokenlen=weight_tokenlen)
     t_filter = time.time() - t0
 
     t0 = time.time()
@@ -1178,6 +1226,9 @@ def run_pipeline(initial_blocks, max_recursion_depth, min_intra_freq,
         "tau": tau,
         "min_block_size": min_block_size,
         "filter_mode": filter_mode,
+        "weight_size": weight_size,
+        "weight_shared": weight_shared,
+        "weight_tokenlen": weight_tokenlen,
         "cluster_on": cluster_on,
         "arcs_weighting": arcs_weighting,
         "density_floor": density_floor,
@@ -1350,7 +1401,7 @@ def _parse_args():
     p.add_argument("--top-k", type=int, default=3,
                    help="Per-record top-k smallest-block filter.")
     p.add_argument("--filter-mode",
-                   choices=["size", "specificity", "keylen"],
+                   choices=["size", "specificity", "keylen", "composite"],
                    default="size",
                    help="Ranking used by Block Filtering to pick a "
                         "record's top-k blocks. 'size' (default): keep "
@@ -1359,7 +1410,21 @@ def _parse_args():
                         "block grown to a long key tuple is treated as "
                         "specific as a much smaller single-token block. "
                         "'keylen': rank by (-|K|, |R_B|), keeping the "
-                        "deepest-refined blocks first.")
+                        "deepest-refined blocks first. 'composite': "
+                        "weighted linear combination of three normalized "
+                        "criteria; configure with --filter-weight-size, "
+                        "--filter-weight-shared, --filter-weight-tokenlen.")
+    p.add_argument("--filter-weight-size", type=float, default=0.0,
+                   help="Composite-mode weight on block size |R_B| "
+                        "(smaller blocks preferred). 0 disables. Min-max "
+                        "normalized across all blocks before weighting.")
+    p.add_argument("--filter-weight-shared", type=float, default=0.0,
+                   help="Composite-mode weight on number of shared tokens "
+                        "|K| (longer key tuples preferred). 0 disables.")
+    p.add_argument("--filter-weight-tokenlen", type=float, default=0.0,
+                   help="Composite-mode weight on mean character length "
+                        "of tokens in K (longer tokens preferred). 0 "
+                        "disables.")
     p.add_argument("--cluster-on", choices=["peak", "final"], default="final",
                    help="Which recursion snapshot feeds clustering: the "
                         "final state (default) or the peak-block-count state.")
@@ -1584,7 +1649,10 @@ if __name__ == "__main__":
                             hierarchical=args.hierarchical_blocking,
                             blocking_mode=blocking_mode,
                             arcs_factors=arcs_factors,
-                            filter_mode=args.filter_mode)
+                            filter_mode=args.filter_mode,
+                            weight_size=args.filter_weight_size,
+                            weight_shared=args.filter_weight_shared,
+                            weight_tokenlen=args.filter_weight_tokenlen)
                for (m, p) in configs]
 
     print("\n\n" + "=" * 110)
