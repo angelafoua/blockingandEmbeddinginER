@@ -1,23 +1,23 @@
 {
   "group": "D_tau",
-  "config_id": "tau=0.1",
-  "label": "tau=0.1",
+  "config_id": "tau=0.05",
+  "label": "tau=0.05",
   "cmd": [
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S7GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
-    "/home/user/blockingandEmbeddinginER/RESULTS/runs/D_tau/tau=0.1/clusters.json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/D_tau/tau=0.05/clusters.json",
     "--tau",
-    "0.1"
+    "0.05"
   ],
   "extra_args": [
     "--tau",
-    "0.1"
+    "0.05"
   ],
   "returncode": 0,
-  "wallclock_s": 26.493064641952515
+  "wallclock_s": 29.23755121231079
 }
