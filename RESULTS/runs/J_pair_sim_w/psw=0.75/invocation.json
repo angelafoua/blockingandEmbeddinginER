@@ -3,10 +3,10 @@
   "config_id": "psw=0.75",
   "label": "pair_sim_weight=0.75",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -19,5 +19,5 @@
     "0.75"
   ],
   "returncode": 0,
-  "wallclock_s": 22.474387645721436
+  "wallclock_s": 32.791924476623535
 }

@@ -22,29 +22,29 @@
   arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
 
 [Records]
-  total                    = 50
-  unique                   = 50
+  total                    = 100
+  unique                   = 100
 
 [Predicted Clusters]
-  total                    = 28
-  multi-record             = 14
-  singletons               = 14
-  size  min / max          = 1 / 4
-  size  mean / median      = 1.786 / 1.5
-  size distribution (size: count):
-    size   1 : 14
-    size   2 : 7
-    size   3 : 6
-    size   4 : 1
-
-[Truth Clusters]  (../truthABCgoodDQ.txt)
-  total                    = 30
+  total                    = 60
+  multi-record             = 29
+  singletons               = 31
   size  min / max          = 1 / 4
   size  mean / median      = 1.667 / 1.0
   size distribution (size: count):
-    size   1 : 16
-    size   2 : 9
-    size   3 : 4
+    size   1 : 31
+    size   2 : 19
+    size   3 : 9
+    size   4 : 1
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 62
+  size  min / max          = 1 / 4
+  size  mean / median      = 1.613 / 1.0
+  size distribution (size: count):
+    size   1 : 33
+    size   2 : 21
+    size   3 : 7
     size   4 : 1
 
 [Distribution Match]
@@ -52,18 +52,18 @@
   size-distribution L1     = 6
 
 [Pair-based Metrics]
-  TP                       = 23
-  FP                       = 8
-  FN                       = 4
-  Linked Pairs (L)         = 31
-  Expected Pairs (E)       = 27
-  Precision                = 0.7419
-  Recall                   = 0.8519
-  F1                       = 0.7931
+  TP                       = 40
+  FP                       = 12
+  FN                       = 8
+  Linked Pairs (L)         = 52
+  Expected Pairs (E)       = 48
+  Precision                = 0.7692
+  Recall                   = 0.8333
+  F1                       = 0.8
 
 [Timings (seconds)]
-  recursive                = 0.016
-  filter                   = 0.001
-  cluster                  = 0.001
+  recursive                = 0.037
+  filter                   = 0.003
+  cluster                  = 0.004
 
 ========================================================================

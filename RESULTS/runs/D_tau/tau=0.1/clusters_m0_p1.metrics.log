@@ -22,49 +22,48 @@
   arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
 
 [Records]
-  total                    = 50
-  unique                   = 50
+  total                    = 100
+  unique                   = 100
 
 [Predicted Clusters]
-  total                    = 24
-  multi-record             = 13
-  singletons               = 11
-  size  min / max          = 1 / 6
-  size  mean / median      = 2.083 / 2.0
+  total                    = 54
+  multi-record             = 29
+  singletons               = 25
+  size  min / max          = 1 / 4
+  size  mean / median      = 1.852 / 2.0
   size distribution (size: count):
-    size   1 : 11
-    size   2 : 4
-    size   3 : 7
-    size   4 : 1
-    size   6 : 1
+    size   1 : 25
+    size   2 : 15
+    size   3 : 11
+    size   4 : 3
 
 [Truth Clusters]  (../truthABCgoodDQ.txt)
-  total                    = 30
+  total                    = 62
   size  min / max          = 1 / 4
-  size  mean / median      = 1.667 / 1.0
+  size  mean / median      = 1.613 / 1.0
   size distribution (size: count):
-    size   1 : 16
-    size   2 : 9
-    size   3 : 4
+    size   1 : 33
+    size   2 : 21
+    size   3 : 7
     size   4 : 1
 
 [Distribution Match]
-  cluster count diff       = -6  (predicted - truth)
-  size-distribution L1     = 14
+  cluster count diff       = -8  (predicted - truth)
+  size-distribution L1     = 20
 
 [Pair-based Metrics]
-  TP                       = 27
-  FP                       = 19
-  FN                       = 0
-  Linked Pairs (L)         = 46
-  Expected Pairs (E)       = 27
-  Precision                = 0.587
-  Recall                   = 1.0
-  F1                       = 0.7397
+  TP                       = 44
+  FP                       = 22
+  FN                       = 4
+  Linked Pairs (L)         = 66
+  Expected Pairs (E)       = 48
+  Precision                = 0.6667
+  Recall                   = 0.9167
+  F1                       = 0.7719
 
 [Timings (seconds)]
-  recursive                = 0.023
-  filter                   = 0.001
-  cluster                  = 0.001
+  recursive                = 0.045
+  filter                   = 0.002
+  cluster                  = 0.004
 
 ========================================================================

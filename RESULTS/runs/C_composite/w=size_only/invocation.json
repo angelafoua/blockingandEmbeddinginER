@@ -3,10 +3,10 @@
   "config_id": "w=size_only",
   "label": "composite/size_only",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -31,5 +31,5 @@
     "0.0"
   ],
   "returncode": 0,
-  "wallclock_s": 22.309935331344604
+  "wallclock_s": 33.032146692276
 }

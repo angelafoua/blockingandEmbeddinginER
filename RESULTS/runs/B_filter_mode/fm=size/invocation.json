@@ -3,10 +3,10 @@
   "config_id": "fm=size",
   "label": "filter_mode=size",
   "cmd": [
-    "/usr/local/bin/python",
+    "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S1G.txt",
+    "../S2G.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -19,5 +19,5 @@
     "size"
   ],
   "returncode": 0,
-  "wallclock_s": 22.41630268096924
+  "wallclock_s": 30.058634519577026
 }
