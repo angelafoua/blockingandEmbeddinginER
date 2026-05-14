@@ -34,3 +34,48 @@ Hierarchical blocking: 6814 tokens, starting from 1 universe block of 2912 recor
   level 5/6814 (token='CREEK', DF=56): frontier=10 (split=3, carry_singleton=0, carry_no_partition=4), tree=19, max_size=2631, singletons=0
   level 1000/6814 (token='MOHAMMAD', DF=4): frontier=1977 (split=3, carry_singleton=1378, carry_no_partition=593), tree=3953, max_size=82, singletons=1383
   level 2000/6814 (token='241112701', DF=2): frontier=2152 (split=0, carry_singleton=1595, carry_no_partition=557), tree=4303, max_size=32, singletons=1595
+  level 3000/6814 (token='KRAWLEC', DF=2): frontier=2243 (split=0, carry_singleton=1711, carry_no_partition=532), tree=4485, max_size=13, singletons=1711
+  level 4000/6814 (token='280', DF=1): frontier=2311 (split=0, carry_singleton=1825, carry_no_partition=486), tree=4621, max_size=6, singletons=1825
+  level 5000/6814 (token='7868', DF=1): frontier=2340 (split=0, carry_singleton=1877, carry_no_partition=463), tree=4679, max_size=6, singletons=1877
+  level 6000/6814 (token='JIMMY', DF=1): frontier=2359 (split=0, carry_singleton=1915, carry_no_partition=444), tree=4717, max_size=6, singletons=1915
+  level 6814/6814 (token='ZZELINKA', DF=1): frontier=2375 (split=0, carry_singleton=1947, carry_no_partition=428), tree=4749, max_size=6, singletons=1947
+Hierarchical blocking finished: 4749 total blocks across the tree (frontier at last level: 2375)
+Hierarchical tree blocks: 4749
+[metrics] Auto-detected truth file: ../truthABCgoodDQ.txt
+
+######################################################################
+# RUN: mode=hierarchical
+######################################################################
+
+Hierarchical mode: 4749 blocks already produced upstream; recursion / merge / purge skipped.
+Clustering on FINAL snapshot (4749 blocks)
+
+Building ARCS weighted graph (weighting=uniform)...
+  [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
+  Graph built in 0.15s — 4199 edges
+  ARCS edge-weight histogram (4199 edges, range [0.0000, 1.5000]):
+    [0.0000, 0.1500): 3045
+    [0.1500, 0.3000): 163
+    [0.3000, 0.4500): 108
+    [0.4500, 0.6000): 166
+    [0.6000, 0.7500): 154
+    [0.7500, 0.9000): 202
+    [0.9000, 1.0500): 94
+    [1.0500, 1.2000): 206
+    [1.2000, 1.3500): 56
+    [1.3500, 1.5000): 5
+  Edges kept (weight >= 0.2): 1078 / 4199
+  Clusters (pre-density): 623 multi-record, 1452 singletons
+  Wrote 2075 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json
+  Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.json
+  Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.log
+
+
+==============================================================================================================
+RUN SUMMARY
+mode=hierarchical, n_levels=6814, tau=0.2, top_k=3, min_block_size=2, arcs_weighting=uniform, density_floor=0.0
+==============================================================================================================
+merge purge  blks(rec)   pairs(rec)  blks(flt)   pairs(flt)  clusters  multi  single  t_rec(s)  t_flt(s)  t_clu(s)  peak(MB)
+--------------------------------------------------------------------------------------------------------------
+    F     F       4749    164802504       2497         6229      2075    623    1452      0.00      0.87      0.17     247.3
+==============================================================================================================
