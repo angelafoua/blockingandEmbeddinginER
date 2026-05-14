@@ -1,0 +1,75 @@
+# group=G_blocking config_id=hierarchical
+# label=hierarchical blocking
+# cmd=/usr/local/bin/python recursive_algo1_2_v2.py --input ../S1G.txt --truth-dir .. --clusters-json /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json --hierarchical-blocking
+
+Starting...
+Loaded 50 records
+Replaced non-word characters with spaces in extracted tokens
+Built token frequency dict with 193 unique tokens
+Stop-word removal: dropped 0 tokens with freq > 60
+  Examples: []
+Rebuilt token frequency dict: 193 unique tokens remain
+
+DF distribution percentiles (post-cleanup):
+  p50=2, p90=4, p95=6, p99=33
+Record-length percentiles (distinct tokens, post-cleanup):
+  p50=11, p90=13, p95=13, p99=13
+
+Resolved parameters (hierarchical mode):
+  n_levels            = 193 (== unique tokens after stop-word removal)
+  min_block_size      = 2
+  top_k               = 3
+  filter_mode         = size
+  tau                 = 0.2
+  arcs_weighting      = uniform
+  density_floor       = 0.0 (min_size=3)
+  cluster_on          = final (forced)
+
+Building hierarchical block tree...
+Hierarchical blocking: 193 tokens, starting from 1 universe block of 50 records
+  level 1/193 (token='NC', DF=47): frontier=2 (split=1, carry_singleton=0, carry_no_partition=0), tree=3, max_size=47, singletons=0
+  level 2/193 (token='AARON', DF=33): frontier=4 (split=2, carry_singleton=0, carry_no_partition=0), tree=7, max_size=31, singletons=1
+  level 3/193 (token='SALEM', DF=31): frontier=6 (split=2, carry_singleton=1, carry_no_partition=1), tree=11, max_size=23, singletons=1
+  level 4/193 (token='WINSTON', DF=31): frontier=6 (split=0, carry_singleton=1, carry_no_partition=5), tree=11, max_size=23, singletons=1
+  level 5/193 (token='RD', DF=13): frontier=9 (split=3, carry_singleton=1, carry_no_partition=2), tree=17, max_size=15, singletons=1
+  level 193/193 (token='WILLIAMSBURG', DF=1): frontier=39 (split=0, carry_singleton=32, carry_no_partition=7), tree=77, max_size=3, singletons=32
+Hierarchical blocking finished: 77 total blocks across the tree (frontier at last level: 39)
+Hierarchical tree blocks: 77
+[metrics] Auto-detected truth file: ../truthABCgoodDQ.txt
+
+######################################################################
+# RUN: mode=hierarchical
+######################################################################
+
+Hierarchical mode: 77 blocks already produced upstream; recursion / merge / purge skipped.
+Clustering on FINAL snapshot (77 blocks)
+
+Building ARCS weighted graph (weighting=uniform)...
+  [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
+  Graph built in 0.00s — 85 edges
+  ARCS edge-weight histogram (85 edges, range [0.0066, 1.0833]):
+    [0.0066, 0.1143): 52
+    [0.1143, 0.2219): 5
+    [0.2219, 0.3296): 5
+    [0.3296, 0.4373): 1
+    [0.4373, 0.5450): 2
+    [0.5450, 0.6526): 2
+    [0.6526, 0.7603): 5
+    [0.7603, 0.8680): 8
+    [0.8680, 0.9757): 0
+    [0.9757, 1.0833): 5
+  Edges kept (weight >= 0.2): 31 / 85
+  Clusters (pre-density): 15 multi-record, 11 singletons
+  Wrote 26 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json
+  Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.json
+  Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.log
+
+
+==============================================================================================================
+RUN SUMMARY
+mode=hierarchical, n_levels=193, tau=0.2, top_k=3, min_block_size=2, arcs_weighting=uniform, density_floor=0.0
+==============================================================================================================
+merge purge  blks(rec)   pairs(rec)  blks(flt)   pairs(flt)  clusters  multi  single  t_rec(s)  t_flt(s)  t_clu(s)  peak(MB)
+--------------------------------------------------------------------------------------------------------------
+    F     F         77         3570         40          136        26     15      11      0.00      0.00      0.00     245.8
+==============================================================================================================

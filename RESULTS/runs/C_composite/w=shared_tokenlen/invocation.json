@@ -1,0 +1,35 @@
+{
+  "group": "C_composite",
+  "config_id": "w=shared_tokenlen",
+  "label": "composite/shared_tokenlen",
+  "cmd": [
+    "/usr/local/bin/python",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S1G.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/C_composite/w=shared_tokenlen/clusters.json",
+    "--filter-mode",
+    "composite",
+    "--filter-weight-size",
+    "0.0",
+    "--filter-weight-shared",
+    "1.0",
+    "--filter-weight-tokenlen",
+    "1.0"
+  ],
+  "extra_args": [
+    "--filter-mode",
+    "composite",
+    "--filter-weight-size",
+    "0.0",
+    "--filter-weight-shared",
+    "1.0",
+    "--filter-weight-tokenlen",
+    "1.0"
+  ],
+  "returncode": 0,
+  "wallclock_s": 22.44298481941223
+}

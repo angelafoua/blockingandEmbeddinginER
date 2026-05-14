@@ -1,0 +1,35 @@
+{
+  "group": "B_filter_mode",
+  "config_id": "fm=composite",
+  "label": "filter_mode=composite",
+  "cmd": [
+    "/usr/local/bin/python",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S1G.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/B_filter_mode/fm=composite/clusters.json",
+    "--filter-mode",
+    "composite",
+    "--filter-weight-size",
+    "1.0",
+    "--filter-weight-shared",
+    "1.0",
+    "--filter-weight-tokenlen",
+    "1.0"
+  ],
+  "extra_args": [
+    "--filter-mode",
+    "composite",
+    "--filter-weight-size",
+    "1.0",
+    "--filter-weight-shared",
+    "1.0",
+    "--filter-weight-tokenlen",
+    "1.0"
+  ],
+  "returncode": 0,
+  "wallclock_s": 22.15977692604065
+}

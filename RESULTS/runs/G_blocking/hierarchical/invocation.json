@@ -1,0 +1,21 @@
+{
+  "group": "G_blocking",
+  "config_id": "hierarchical",
+  "label": "hierarchical blocking",
+  "cmd": [
+    "/usr/local/bin/python",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S1G.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json",
+    "--hierarchical-blocking"
+  ],
+  "extra_args": [
+    "--hierarchical-blocking"
+  ],
+  "returncode": 0,
+  "wallclock_s": 5.658923864364624
+}

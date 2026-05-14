@@ -1,0 +1,35 @@
+{
+  "group": "C_composite",
+  "config_id": "w=size_only",
+  "label": "composite/size_only",
+  "cmd": [
+    "/usr/local/bin/python",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S1G.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/C_composite/w=size_only/clusters.json",
+    "--filter-mode",
+    "composite",
+    "--filter-weight-size",
+    "1.0",
+    "--filter-weight-shared",
+    "0.0",
+    "--filter-weight-tokenlen",
+    "0.0"
+  ],
+  "extra_args": [
+    "--filter-mode",
+    "composite",
+    "--filter-weight-size",
+    "1.0",
+    "--filter-weight-shared",
+    "0.0",
+    "--filter-weight-tokenlen",
+    "0.0"
+  ],
+  "returncode": 0,
+  "wallclock_s": 22.309935331344604
+}

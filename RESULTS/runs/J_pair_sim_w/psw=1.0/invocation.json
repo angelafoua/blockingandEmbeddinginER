@@ -1,0 +1,23 @@
+{
+  "group": "J_pair_sim_w",
+  "config_id": "psw=1.0",
+  "label": "pair_sim_weight=1.0",
+  "cmd": [
+    "/usr/local/bin/python",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S1G.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/J_pair_sim_w/psw=1.0/clusters.json",
+    "--arcs-pair-sim-weight",
+    "1.0"
+  ],
+  "extra_args": [
+    "--arcs-pair-sim-weight",
+    "1.0"
+  ],
+  "returncode": 0,
+  "wallclock_s": 22.434741973876953
+}
