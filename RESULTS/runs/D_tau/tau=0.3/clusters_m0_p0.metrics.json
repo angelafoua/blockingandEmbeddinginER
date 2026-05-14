@@ -2,11 +2,11 @@
   "config": {
     "blocking_mode": "default",
     "do_merge": false,
-    "do_purge": true,
+    "do_purge": false,
     "max_recursion_depth": 5,
     "min_intra_freq": 2,
     "top_k": 3,
-    "tau": 0.4,
+    "tau": 0.3,
     "min_block_size": 2,
     "filter_mode": "size",
     "weight_size": 0.0,
@@ -25,53 +25,56 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 1912,
-  "n_unique_records": 1912,
+  "n_records_total": 2912,
+  "n_unique_records": 2912,
   "predicted_clusters": {
-    "n_total": 1765,
-    "n_multi": 131,
-    "n_singletons": 1634,
+    "n_total": 1985,
+    "n_multi": 792,
+    "n_singletons": 1193,
     "min_size": 1,
-    "max_size": 3,
-    "mean_size": 1.083,
+    "max_size": 6,
+    "mean_size": 1.467,
     "median_size": 1,
     "size_distribution": {
-      "1": 1634,
-      "2": 115,
-      "3": 16
+      "1": 1193,
+      "2": 676,
+      "3": 102,
+      "4": 10,
+      "5": 3,
+      "6": 1
     }
   },
   "truth_clusters": {
     "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 1188,
+    "n_total": 1827,
     "min_size": 1,
     "max_size": 6,
-    "mean_size": 1.609,
-    "median_size": 1.0,
+    "mean_size": 1.594,
+    "median_size": 1,
     "size_distribution": {
-      "1": 678,
-      "2": 339,
-      "3": 136,
-      "4": 28,
-      "5": 6,
+      "1": 1056,
+      "2": 516,
+      "3": 205,
+      "4": 42,
+      "5": 7,
       "6": 1
     }
   },
   "pair_metrics": {
-    "TP": 163,
-    "E": 990,
-    "L": 163,
-    "FP": 0,
-    "FN": 827,
-    "precision": 1.0,
-    "recall": 0.1646,
-    "f1": 0.2827
+    "TP": 989,
+    "E": 1468,
+    "L": 1087,
+    "FP": 98,
+    "FN": 479,
+    "precision": 0.9098,
+    "recall": 0.6737,
+    "f1": 0.7742
   },
-  "size_distribution_l1": 1335,
-  "cluster_count_diff": 577,
+  "size_distribution_l1": 436,
+  "cluster_count_diff": 158,
   "timings_seconds": {
-    "recursive": 0.38,
-    "filter": 0.03,
-    "cluster": 0.092
+    "recursive": 2.009,
+    "filter": 0.333,
+    "cluster": 0.12
   }
 }
