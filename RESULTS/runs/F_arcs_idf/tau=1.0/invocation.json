@@ -1,0 +1,27 @@
+{
+  "group": "F_arcs_idf",
+  "config_id": "tau=1.0",
+  "label": "arcs=idf,tau=1.0",
+  "cmd": [
+    "/usr/local/bin/python3",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S7GX.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/F_arcs_idf/tau=1.0/clusters.json",
+    "--arcs-weighting",
+    "idf",
+    "--tau",
+    "1.0"
+  ],
+  "extra_args": [
+    "--arcs-weighting",
+    "idf",
+    "--tau",
+    "1.0"
+  ],
+  "returncode": 0,
+  "wallclock_s": 28.965857982635498
+}
