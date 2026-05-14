@@ -1,0 +1,25 @@
+{
+  "group": "G_blocking",
+  "config_id": "full",
+  "label": "full blocking",
+  "cmd": [
+    "/usr/local/bin/python3",
+    "recursive_algo1_2_v2.py",
+    "--input",
+    "../S7GX.txt",
+    "--truth-dir",
+    "..",
+    "--clusters-json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters.json",
+    "--full-blocking",
+    "--max-block-pair-cost",
+    "100000"
+  ],
+  "extra_args": [
+    "--full-blocking",
+    "--max-block-pair-cost",
+    "100000"
+  ],
+  "returncode": 0,
+  "wallclock_s": 34.72255778312683
+}
