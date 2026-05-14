@@ -1,23 +1,23 @@
 {
   "group": "H_recursion_depth",
-  "config_id": "d=5",
-  "label": "max_depth=5",
+  "config_id": "d=3",
+  "label": "max_depth=3",
   "cmd": [
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S7GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
-    "/home/user/blockingandEmbeddinginER/RESULTS/runs/H_recursion_depth/d=5/clusters.json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/H_recursion_depth/d=3/clusters.json",
     "--max-recursion-depth",
-    "5"
+    "3"
   ],
   "extra_args": [
     "--max-recursion-depth",
-    "5"
+    "3"
   ],
   "returncode": 0,
-  "wallclock_s": 26.183640241622925
+  "wallclock_s": 28.523528575897217
 }
