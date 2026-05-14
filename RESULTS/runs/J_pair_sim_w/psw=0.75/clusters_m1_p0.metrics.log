@@ -1,0 +1,74 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 5
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 0.2
+  min_block_size           = 2
+  filter_mode              = size
+  weight_size              = 0.0
+  weight_shared            = 0.0
+  weight_tokenlen          = 0.0
+  cluster_on               = final
+  arcs_weighting           = uniform
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 0.75}
+
+[Records]
+  total                    = 2912
+  unique                   = 2912
+
+[Predicted Clusters]
+  total                    = 1739
+  multi-record             = 818
+  singletons               = 921
+  size  min / max          = 1 / 7
+  size  mean / median      = 1.675 / 1
+  size distribution (size: count):
+    size   1 : 921
+    size   2 : 546
+    size   3 : 207
+    size   4 : 51
+    size   5 : 11
+    size   6 : 2
+    size   7 : 1
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 1827
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.594 / 1
+  size distribution (size: count):
+    size   1 : 1056
+    size   2 : 516
+    size   3 : 205
+    size   4 : 42
+    size   5 : 7
+    size   6 : 1
+
+[Distribution Match]
+  cluster count diff       = -88  (predicted - truth)
+  size-distribution L1     = 182
+
+[Pair-based Metrics]
+  TP                       = 1282
+  FP                       = 352
+  FN                       = 186
+  Linked Pairs (L)         = 1634
+  Expected Pairs (E)       = 1468
+  Precision                = 0.7846
+  Recall                   = 0.8733
+  F1                       = 0.8266
+
+[Timings (seconds)]
+  recursive                = 0.5
+  filter                   = 0.066
+  cluster                  = 0.17
+
+========================================================================
