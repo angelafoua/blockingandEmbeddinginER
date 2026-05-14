@@ -6,7 +6,7 @@
     "max_recursion_depth": 5,
     "min_intra_freq": 2,
     "top_k": 3,
-    "tau": 0.4,
+    "tau": 0.2,
     "min_block_size": 2,
     "filter_mode": "size",
     "weight_size": 0.0,
@@ -28,20 +28,28 @@
   "n_records_total": 2912,
   "n_unique_records": 2912,
   "predicted_clusters": {
-    "n_total": 1682,
-    "n_multi": 790,
-    "n_singletons": 892,
+    "n_total": 1341,
+    "n_multi": 752,
+    "n_singletons": 589,
     "min_size": 1,
-    "max_size": 6,
-    "mean_size": 1.731,
-    "median_size": 1.0,
+    "max_size": 16,
+    "mean_size": 2.172,
+    "median_size": 2,
     "size_distribution": {
-      "1": 892,
-      "2": 483,
-      "3": 208,
-      "4": 69,
-      "5": 26,
-      "6": 4
+      "1": 589,
+      "2": 374,
+      "3": 191,
+      "4": 84,
+      "5": 43,
+      "6": 29,
+      "7": 12,
+      "8": 5,
+      "9": 5,
+      "10": 4,
+      "12": 1,
+      "13": 2,
+      "14": 1,
+      "16": 1
     }
   },
   "truth_clusters": {
@@ -61,19 +69,19 @@
     }
   },
   "pair_metrics": {
-    "TP": 1317,
+    "TP": 1355,
     "E": 1468,
-    "L": 1841,
-    "FP": 524,
-    "FN": 151,
-    "precision": 0.7154,
-    "recall": 0.8971,
-    "f1": 0.796
+    "L": 3501,
+    "FP": 2146,
+    "FN": 113,
+    "precision": 0.387,
+    "recall": 0.923,
+    "f1": 0.5454
   },
-  "size_distribution_l1": 249,
-  "cluster_count_diff": -145,
+  "size_distribution_l1": 760,
+  "cluster_count_diff": -486,
   "timings_seconds": {
-    "recursive": 0.501,
+    "recursive": 0.505,
     "filter": 0.047,
     "cluster": 0.159
   }
