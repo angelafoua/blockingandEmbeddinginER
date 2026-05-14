@@ -1,12 +1,12 @@
 {
   "config": {
     "blocking_mode": "default",
-    "do_merge": false,
+    "do_merge": true,
     "do_purge": false,
     "max_recursion_depth": 5,
     "min_intra_freq": 2,
     "top_k": 3,
-    "tau": 0.2,
+    "tau": 0.1,
     "min_block_size": 2,
     "filter_mode": "size",
     "weight_size": 0.0,
@@ -25,56 +25,57 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 1912,
-  "n_unique_records": 1912,
+  "n_records_total": 2912,
+  "n_unique_records": 2912,
   "predicted_clusters": {
-    "n_total": 1244,
-    "n_multi": 561,
-    "n_singletons": 683,
+    "n_total": 1684,
+    "n_multi": 808,
+    "n_singletons": 876,
     "min_size": 1,
-    "max_size": 6,
-    "mean_size": 1.537,
+    "max_size": 7,
+    "mean_size": 1.729,
     "median_size": 1.0,
     "size_distribution": {
-      "1": 683,
-      "2": 469,
-      "3": 81,
-      "4": 8,
-      "5": 2,
-      "6": 1
+      "1": 876,
+      "2": 510,
+      "3": 208,
+      "4": 67,
+      "5": 17,
+      "6": 3,
+      "7": 3
     }
   },
   "truth_clusters": {
     "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 1188,
+    "n_total": 1827,
     "min_size": 1,
     "max_size": 6,
-    "mean_size": 1.609,
-    "median_size": 1.0,
+    "mean_size": 1.594,
+    "median_size": 1,
     "size_distribution": {
-      "1": 678,
-      "2": 339,
-      "3": 136,
-      "4": 28,
-      "5": 6,
+      "1": 1056,
+      "2": 516,
+      "3": 205,
+      "4": 42,
+      "5": 7,
       "6": 1
     }
   },
   "pair_metrics": {
-    "TP": 700,
-    "E": 990,
-    "L": 795,
-    "FP": 95,
-    "FN": 290,
-    "precision": 0.8805,
-    "recall": 0.7071,
-    "f1": 0.7843
+    "TP": 1317,
+    "E": 1468,
+    "L": 1814,
+    "FP": 497,
+    "FN": 151,
+    "precision": 0.726,
+    "recall": 0.8971,
+    "f1": 0.8026
   },
-  "size_distribution_l1": 214,
-  "cluster_count_diff": 56,
+  "size_distribution_l1": 229,
+  "cluster_count_diff": -143,
   "timings_seconds": {
-    "recursive": 1.594,
-    "filter": 0.247,
-    "cluster": 0.083
+    "recursive": 0.519,
+    "filter": 0.066,
+    "cluster": 0.178
   }
 }
