@@ -1,0 +1,201 @@
+Summary of the Methodology
+
+Your methodology introduces a recursive redundancy-positive meta-blocking framework for scalable Entity Resolution (ER).
+
+The system operates in four major phases:
+
+Recursive Blocking
+    ↓
+Redundancy-Positive Candidate Space Construction
+    ↓
+Weighted Entity Co-Occurrence Graph Construction
+    ↓
+Graph Pruning and Candidate Pair Extraction
+
+Unlike traditional flat token blocking approaches, your method recursively partitions and refines records into overlapping blocks, intentionally preserving redundancy in order to maximize recall.
+
+The resulting blocks are transformed into an entity co-occurrence graph:
+
+nodes represent records
+edges represent co-occurrence relationships induced by recursive blocks
+
+Edge weights are computed using a normalized similarity formulation that incorporates:
+
+shared token overlap
+block cardinality/informativeness
+record length normalization
+
+This weighting mechanism captures both:
+
+lexical overlap
+structural discriminative power
+
+while reducing the influence of noisy or overly frequent tokens.
+
+After graph construction, pruning techniques retain only the strongest neighborhood relationships, significantly reducing the number of candidate comparisons before pairwise matching.
+
+Main Contributions
+1. Recursive Redundancy-Positive Blocking
+
+The methodology introduces a recursive blocking strategy that generates overlapping candidate spaces hierarchically rather than through flat token-based blocking.
+
+This creates:
+
+deeper structural redundancy
+higher-quality co-occurrence signals
+adaptive candidate neighborhoods
+
+compared to classical redundancy-positive methods.
+
+2. Graph-Based Reformulation of Candidate Generation
+
+The methodology reformulates blocking as a graph construction problem:
+
+records → weighted similarity graph
+
+rather than:
+
+independent token blocks
+fixed blocking windows
+canopy-style partitions
+
+This allows the ER pipeline to leverage:
+
+graph topology
+neighborhood structure
+local similarity relationships
+
+during candidate generation.
+
+3. Enhanced Weighting Strategy
+
+The proposed edge-weighting function extends classical Jaccard-style weighting by incorporating:
+
+shared token evidence
+block informativeness
+record length normalization
+
+This produces a more discriminative similarity estimate than simple block co-occurrence counts.
+
+Conceptually, the weighting function approximates:
+
+match likelihood conditioned on structural overlap
+
+rather than raw token overlap alone.
+
+4. Efficient Candidate Reduction
+
+The graph-pruning phase aggressively removes weak candidate relationships while preserving high-recall neighborhoods.
+
+This substantially reduces:
+
+redundant comparisons
+superfluous comparisons
+pairwise matching cost
+
+without requiring expensive semantic similarity computations during blocking.
+
+Novelty
+
+The novelty of the work lies in the combination of:
+
+Recursive Redundancy Generation
+
+Traditional redundancy-positive methods generate overlap using:
+
+flat tokenization
+q-grams
+attribute token blocking
+
+Your methodology instead creates redundancy recursively, producing hierarchical overlap structures that better preserve meaningful candidate relationships.
+
+Structural Similarity Weighting
+
+Unlike classical meta-blocking approaches that rely primarily on:
+
+block overlap count
+block membership statistics
+
+your framework computes edge weights using both:
+
+local overlap structure
+global block informativeness
+
+This creates a more expressive similarity graph.
+
+Unified Graph-Centric Blocking Framework
+
+The work unifies:
+
+recursive blocking
+overlap weighting
+graph sparsification
+
+into a single graph-centric ER pipeline.
+
+This positions blocking not as a preprocessing heuristic, but as a structured graph optimization problem.
+
+Connection to Papadakis et al.
+
+Your methodology is directly connected to the meta-blocking framework proposed by .
+
+Papadakis introduced the core idea that:
+
+shared block assignments induce an approximate similarity graph
+
+and that:
+
+edge weighting
+graph pruning
+
+can dramatically reduce unnecessary pairwise comparisons.
+
+Their pipeline can be summarized as:
+
+blocking
+→ blocking graph
+→ edge weighting
+→ graph pruning
+→ candidate comparisons
+
+Your work extends this paradigm in several important ways.
+
+How Your Work Extends Papadakis
+Papadakis et al.	Your Methodology
+flat redundancy-positive blocking	recursive redundancy-positive blocking
+token/block co-occurrence	hierarchical overlap structure
+block-membership similarity	token-structural similarity
+simple graph weighting	normalized discriminative weighting
+static block generation	recursive adaptive blocking
+heuristic overlap pruning	structurally-informed graph pruning
+Conceptual Relationship
+
+Your work can be viewed as:
+
+a recursive and structurally-enhanced extension of meta-blocking
+
+In particular:
+
+Papadakis establishes the graph-based meta-blocking paradigm
+Your work strengthens the quality of the graph itself
+
+by improving:
+
+how redundancy is generated
+how edge similarity is estimated
+Broader Interpretation
+
+Conceptually, your framework moves meta-blocking toward:
+
+graph sparsification
+neighborhood retrieval
+similarity graph construction
+retrieval-style candidate generation
+
+This places the work closer to modern:
+
+ANN retrieval systems
+graph-based retrieval pipelines
+sparse similarity learning frameworks
+
+than classical blocking heuristics alone.
