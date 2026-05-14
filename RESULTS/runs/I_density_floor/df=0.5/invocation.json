@@ -1,23 +1,23 @@
 {
   "group": "I_density_floor",
-  "config_id": "df=0.7",
-  "label": "density_floor=0.7",
+  "config_id": "df=0.5",
+  "label": "density_floor=0.5",
   "cmd": [
     "/usr/local/bin/python3",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S7GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
-    "/home/user/blockingandEmbeddinginER/RESULTS/runs/I_density_floor/df=0.7/clusters.json",
+    "/home/user/blockingandEmbeddinginER/RESULTS/runs/I_density_floor/df=0.5/clusters.json",
     "--density-floor",
-    "0.7"
+    "0.5"
   ],
   "extra_args": [
     "--density-floor",
-    "0.7"
+    "0.5"
   ],
   "returncode": 0,
-  "wallclock_s": 26.0183744430542
+  "wallclock_s": 29.137473106384277
 }
