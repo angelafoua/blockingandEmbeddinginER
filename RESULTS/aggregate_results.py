@@ -231,6 +231,20 @@ def build_readme(df, summary_df):
     expected_pairs = int(df["expected_pairs"].dropna().iloc[0]) \
         if df["expected_pairs"].notna().any() else None
 
+    ds_upper = DS_BASE.upper()
+    if "P" in ds_upper:
+        truth_kind = "poor-DQ"
+        truth_file_name = "truthABCpoorDQ.txt"
+        truth_letter = "P"
+    elif "G" in ds_upper:
+        truth_kind = "good-DQ"
+        truth_file_name = "truthABCgoodDQ.txt"
+        truth_letter = "G"
+    else:
+        truth_kind = "unknown"
+        truth_file_name = "(none)"
+        truth_letter = "?"
+
     lines = []
     lines.append(f"# Experiment Report - {DATASET} (algo1_2_v2)\n")
     lines.append(f"Auto-generated aggregation of the recursive blocking + "
@@ -243,15 +257,12 @@ def build_readme(df, summary_df):
     lines.append(f"- **Source file:** `{DATASET}`")
     lines.append(f"- **Records loaded:** {n_records}")
     lines.append(f"- **Unique records:** {n_unique}")
-    _dq = "poor" if "P" in DS_BASE.upper() else "good"
-    _truth_name = f"truthABC{'poorDQ' if _dq == 'poor' else 'goodDQ'}.txt"
-    _truth_key = "P" if _dq == "poor" else "G"
-    lines.append(f"- **Truth clusters ({_dq}-DQ ground truth):** "
+    lines.append(f"- **Truth clusters ({truth_kind} ground truth):** "
                  f"{truth_clusters}")
     lines.append(f"- **Truth equivalent pairs (E):** {expected_pairs}")
-    lines.append(f"- **Truth source:** `{_truth_name}` (auto-detected by "
-                 f"`er_metrics.detect_truth_file` because the filename "
-                 f"contains a `{_truth_key}`).")
+    lines.append(f"- **Truth source:** `{truth_file_name}` (auto-detected by "
+                 "`er_metrics.detect_truth_file` because the filename "
+                 f"contains a `{truth_letter}`).")
     if df["truth_size_distribution"].notna().any():
         lines.append(f"- **Truth cluster size distribution:** "
                      f"`{df['truth_size_distribution'].dropna().iloc[0]}`")
@@ -519,7 +530,7 @@ def build_readme(df, summary_df):
         lines.append("```")
         lines.append("")
         lines.append(f"Auto-detected truth file for `{DATASET}` is "
-                     f"`{_truth_name}`. The pipeline is deterministic "
+                     f"`{truth_file_name}`. The pipeline is deterministic "
                      "given the same input and CLI args (no RNG seeds are "
                      "exposed because the algorithm itself contains no "
                      "stochastic steps).")

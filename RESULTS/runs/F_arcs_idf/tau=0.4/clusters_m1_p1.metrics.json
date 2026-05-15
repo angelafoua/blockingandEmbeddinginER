@@ -25,58 +25,65 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 5000,
-  "n_unique_records": 5000,
+  "n_records_total": 1000,
+  "n_unique_records": 1000,
   "predicted_clusters": {
-    "n_total": 2384,
-    "n_multi": 1260,
-    "n_singletons": 1124,
+    "n_total": 554,
+    "n_multi": 247,
+    "n_singletons": 307,
     "min_size": 1,
-    "max_size": 8,
-    "mean_size": 2.097,
-    "median_size": 2.0,
+    "max_size": 7,
+    "mean_size": 1.805,
+    "median_size": 1.0,
     "size_distribution": {
-      "1": 1124,
-      "2": 490,
-      "3": 373,
-      "4": 266,
-      "5": 89,
-      "6": 30,
-      "7": 8,
-      "8": 4
+      "1": 307,
+      "2": 118,
+      "3": 87,
+      "4": 22,
+      "5": 15,
+      "6": 2,
+      "7": 3
     }
   },
   "truth_clusters": {
-    "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 2183,
+    "truth_file": "../truthABCpoorDQ.txt",
+    "n_total": 195,
     "min_size": 1,
-    "max_size": 6,
-    "mean_size": 2.29,
-    "median_size": 2,
+    "max_size": 17,
+    "mean_size": 5.128,
+    "median_size": 5,
     "size_distribution": {
-      "1": 741,
-      "2": 597,
-      "3": 440,
-      "4": 298,
-      "5": 89,
-      "6": 18
+      "1": 16,
+      "2": 15,
+      "3": 30,
+      "4": 25,
+      "5": 33,
+      "6": 26,
+      "7": 10,
+      "8": 19,
+      "9": 9,
+      "10": 4,
+      "11": 3,
+      "12": 3,
+      "14": 1,
+      "17": 1
     }
   },
   "pair_metrics": {
-    "TP": 3906,
-    "E": 4865,
-    "L": 4825,
-    "FP": 919,
-    "FN": 959,
-    "precision": 0.8095,
-    "recall": 0.8029,
-    "f1": 0.8062
+    "TP": 528,
+    "E": 2811,
+    "L": 754,
+    "FP": 226,
+    "FN": 2283,
+    "precision": 0.7003,
+    "recall": 0.1878,
+    "f1": 0.2962
   },
-  "size_distribution_l1": 613,
-  "cluster_count_diff": 201,
+  "size_distribution_l1": 543,
+  "cluster_count_diff": 359,
   "timings_seconds": {
-    "recursive": 0.873,
-    "filter": 0.076,
-    "cluster": 0.319
+    "recursive": 0.297,
+    "filter": 0.02,
+    "cluster": 0.069
   }
 }
