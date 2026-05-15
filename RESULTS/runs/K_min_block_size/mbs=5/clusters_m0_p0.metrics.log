@@ -22,49 +22,49 @@
   arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
 
 [Records]
-  total                    = 1912
-  unique                   = 1912
+  total                    = 3004
+  unique                   = 3004
 
 [Predicted Clusters]
-  total                    = 1899
+  total                    = 2991
   multi-record             = 3
-  singletons               = 1896
+  singletons               = 2988
   size  min / max          = 1 / 6
-  size  mean / median      = 1.007 / 1
+  size  mean / median      = 1.004 / 1
   size distribution (size: count):
-    size   1 : 1896
+    size   1 : 2988
     size   5 : 2
     size   6 : 1
 
 [Truth Clusters]  (../truthABCgoodDQ.txt)
-  total                    = 1188
+  total                    = 1877
   size  min / max          = 1 / 6
-  size  mean / median      = 1.609 / 1.0
+  size  mean / median      = 1.6 / 1
   size distribution (size: count):
-    size   1 : 678
-    size   2 : 339
-    size   3 : 136
-    size   4 : 28
-    size   5 : 6
+    size   1 : 1076
+    size   2 : 538
+    size   3 : 209
+    size   4 : 46
+    size   5 : 7
     size   6 : 1
 
 [Distribution Match]
-  cluster count diff       = 711  (predicted - truth)
-  size-distribution L1     = 1725
+  cluster count diff       = 1114  (predicted - truth)
+  size-distribution L1     = 2710
 
 [Pair-based Metrics]
   TP                       = 35
   FP                       = 0
-  FN                       = 955
+  FN                       = 1491
   Linked Pairs (L)         = 35
-  Expected Pairs (E)       = 990
+  Expected Pairs (E)       = 1526
   Precision                = 1.0
-  Recall                   = 0.0354
-  F1                       = 0.0683
+  Recall                   = 0.0229
+  F1                       = 0.0448
 
 [Timings (seconds)]
-  recursive                = 1.531
-  filter                   = 0.224
-  cluster                  = 0.006
+  recursive                = 2.539
+  filter                   = 0.419
+  cluster                  = 0.012
 
 ========================================================================
