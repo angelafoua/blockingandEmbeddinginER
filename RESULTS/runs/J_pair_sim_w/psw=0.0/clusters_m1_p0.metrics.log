@@ -22,104 +22,80 @@
   arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 0.0}
 
 [Records]
-  total                    = 6000
-  unique                   = 6000
+  total                    = 5000
+  unique                   = 5000
 
 [Predicted Clusters]
-  total                    = 1222
-  multi-record             = 535
-  singletons               = 687
-  size  min / max          = 1 / 1609
-  size  mean / median      = 4.91 / 1.0
+  total                    = 1424
+  multi-record             = 823
+  singletons               = 601
+  size  min / max          = 1 / 287
+  size  mean / median      = 3.511 / 2.0
   size distribution (size: count):
-    size   1 : 687
-    size   2 : 152
-    size   3 : 48
-    size   4 : 80
-    size   5 : 32
-    size   6 : 84
-    size   7 : 16
-    size   8 : 18
-    size   9 : 14
-    size  10 : 14
-    size  11 : 8
-    size  12 : 11
-    size  13 : 5
-    size  14 : 6
-    size  15 : 5
-    size  16 : 7
-    size  17 : 5
-    size  18 : 2
-    size  19 : 5
+    size   1 : 601
+    size   2 : 190
+    size   3 : 183
+    size   4 : 182
+    size   5 : 104
+    size   6 : 41
+    size   7 : 23
+    size   8 : 16
+    size   9 : 15
+    size  10 : 11
+    size  11 : 10
+    size  12 : 7
+    size  13 : 4
+    size  14 : 5
+    size  15 : 2
+    size  16 : 5
+    size  17 : 1
+    size  18 : 4
+    size  19 : 1
     size  20 : 1
-    size  21 : 1
-    size  22 : 2
-    size  23 : 2
-    size  24 : 1
-    size  26 : 1
-    size  29 : 2
-    size  30 : 2
-    size  32 : 1
-    size  33 : 1
-    size  34 : 1
-    size  42 : 1
-    size  43 : 2
-    size  61 : 1
-    size  98 : 1
-    size 115 : 1
-    size 178 : 1
-    size 1609 : 1
-
-[Truth Clusters]  (../truthABCpoorDQ.txt)
-  total                    = 693
-  size  min / max          = 1 / 35
-  size  mean / median      = 8.658 / 8
-  size distribution (size: count):
-    size   1 : 17
-    size   2 : 40
-    size   3 : 39
-    size   4 : 65
-    size   5 : 52
-    size   6 : 51
-    size   7 : 58
-    size   8 : 55
-    size   9 : 51
-    size  10 : 60
-    size  11 : 33
-    size  12 : 32
-    size  13 : 26
-    size  14 : 21
-    size  15 : 19
-    size  16 : 13
-    size  17 : 18
-    size  18 : 14
-    size  19 : 11
-    size  20 : 3
-    size  21 : 5
-    size  22 : 3
-    size  23 : 2
-    size  25 : 2
+    size  21 : 4
+    size  22 : 1
+    size  23 : 1
+    size  25 : 1
     size  26 : 1
     size  28 : 1
+    size  31 : 1
+    size  34 : 2
     size  35 : 1
+    size  40 : 1
+    size  50 : 1
+    size  73 : 1
+    size  96 : 1
+    size 287 : 1
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 2183
+  size  min / max          = 1 / 6
+  size  mean / median      = 2.29 / 2
+  size distribution (size: count):
+    size   1 : 741
+    size   2 : 597
+    size   3 : 440
+    size   4 : 298
+    size   5 : 89
+    size   6 : 18
 
 [Distribution Match]
-  cluster count diff       = 529  (predicted - truth)
-  size-distribution L1     = 1181
+  cluster count diff       = -759  (predicted - truth)
+  size-distribution L1     = 1081
 
 [Pair-based Metrics]
-  TP                       = 12984
-  FP                       = 1327084
-  FN                       = 18751
-  Linked Pairs (L)         = 1340068
-  Expected Pairs (E)       = 31735
-  Precision                = 0.0097
-  Recall                   = 0.4091
-  F1                       = 0.0189
+  TP                       = 4151
+  FP                       = 59742
+  FN                       = 714
+  Linked Pairs (L)         = 63893
+  Expected Pairs (E)       = 4865
+  Precision                = 0.065
+  Recall                   = 0.8532
+  F1                       = 0.1207
 
 [Timings (seconds)]
-  recursive                = 2.405
-  filter                   = 0.263
-  cluster                  = 0.232
+  recursive                = 1.077
+  filter                   = 0.144
+  cluster                  = 0.193
 
 ========================================================================
