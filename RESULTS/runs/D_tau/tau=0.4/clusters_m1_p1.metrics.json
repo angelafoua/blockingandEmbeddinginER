@@ -25,53 +25,73 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 1912,
-  "n_unique_records": 1912,
+  "n_records_total": 6000,
+  "n_unique_records": 6000,
   "predicted_clusters": {
-    "n_total": 1765,
-    "n_multi": 131,
-    "n_singletons": 1634,
+    "n_total": 5978,
+    "n_multi": 22,
+    "n_singletons": 5956,
     "min_size": 1,
-    "max_size": 3,
-    "mean_size": 1.083,
-    "median_size": 1,
+    "max_size": 2,
+    "mean_size": 1.004,
+    "median_size": 1.0,
     "size_distribution": {
-      "1": 1634,
-      "2": 115,
-      "3": 16
+      "1": 5956,
+      "2": 22
     }
   },
   "truth_clusters": {
-    "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 1188,
+    "truth_file": "../truthABCpoorDQ.txt",
+    "n_total": 693,
     "min_size": 1,
-    "max_size": 6,
-    "mean_size": 1.609,
-    "median_size": 1.0,
+    "max_size": 35,
+    "mean_size": 8.658,
+    "median_size": 8,
     "size_distribution": {
-      "1": 678,
-      "2": 339,
-      "3": 136,
-      "4": 28,
-      "5": 6,
-      "6": 1
+      "1": 17,
+      "2": 40,
+      "3": 39,
+      "4": 65,
+      "5": 52,
+      "6": 51,
+      "7": 58,
+      "8": 55,
+      "9": 51,
+      "10": 60,
+      "11": 33,
+      "12": 32,
+      "13": 26,
+      "14": 21,
+      "15": 19,
+      "16": 13,
+      "17": 18,
+      "18": 14,
+      "19": 11,
+      "20": 3,
+      "21": 5,
+      "22": 3,
+      "23": 2,
+      "25": 2,
+      "26": 1,
+      "28": 1,
+      "35": 1
     }
   },
   "pair_metrics": {
-    "TP": 163,
-    "E": 990,
-    "L": 163,
+    "TP": 22,
+    "E": 31735,
+    "L": 22,
     "FP": 0,
-    "FN": 827,
+    "FN": 31713,
     "precision": 1.0,
-    "recall": 0.1646,
-    "f1": 0.2827
+    "recall": 0.0007,
+    "f1": 0.0014
   },
-  "size_distribution_l1": 1335,
-  "cluster_count_diff": 577,
+  "size_distribution_l1": 6593,
+  "cluster_count_diff": 5285,
   "timings_seconds": {
-    "recursive": 0.38,
-    "filter": 0.038,
-    "cluster": 0.109
+    "recursive": 1.614,
+    "filter": 0.115,
+    "cluster": 0.562
   }
 }

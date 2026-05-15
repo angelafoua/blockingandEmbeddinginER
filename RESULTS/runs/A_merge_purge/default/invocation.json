@@ -3,10 +3,10 @@
   "config_id": "default",
   "label": "baseline 4-way",
   "cmd": [
-    "/usr/local/bin/python3",
+    "/usr/local/bin/python",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S4G.txt",
+    "../S12PX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -14,5 +14,5 @@
   ],
   "extra_args": [],
   "returncode": 0,
-  "wallclock_s": 31.374727725982666
+  "wallclock_s": 26.47879648208618
 }
