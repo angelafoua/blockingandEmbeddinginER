@@ -6,7 +6,7 @@
     "/usr/local/bin/python",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S14GX.txt",
+    "../S8P.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -17,5 +17,5 @@
     "--hierarchical-blocking"
   ],
   "returncode": 0,
-  "wallclock_s": 65.98747563362122
+  "wallclock_s": 3.9756195545196533
 }

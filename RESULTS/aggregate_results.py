@@ -231,6 +231,20 @@ def build_readme(df, summary_df):
     expected_pairs = int(df["expected_pairs"].dropna().iloc[0]) \
         if df["expected_pairs"].notna().any() else None
 
+    ds_upper = DS_BASE.upper()
+    if "P" in ds_upper:
+        truth_kind = "poor-DQ"
+        truth_file_name = "truthABCpoorDQ.txt"
+        truth_letter = "P"
+    elif "G" in ds_upper:
+        truth_kind = "good-DQ"
+        truth_file_name = "truthABCgoodDQ.txt"
+        truth_letter = "G"
+    else:
+        truth_kind = "unknown"
+        truth_file_name = "(none)"
+        truth_letter = "?"
+
     lines = []
     lines.append(f"# Experiment Report - {DATASET} (algo1_2_v2)\n")
     lines.append(f"Auto-generated aggregation of the recursive blocking + "
@@ -243,12 +257,12 @@ def build_readme(df, summary_df):
     lines.append(f"- **Source file:** `{DATASET}`")
     lines.append(f"- **Records loaded:** {n_records}")
     lines.append(f"- **Unique records:** {n_unique}")
-    lines.append(f"- **Truth clusters (good-DQ ground truth):** "
+    lines.append(f"- **Truth clusters ({truth_kind} ground truth):** "
                  f"{truth_clusters}")
     lines.append(f"- **Truth equivalent pairs (E):** {expected_pairs}")
-    lines.append("- **Truth source:** `truthABCgoodDQ.txt` (auto-detected by "
+    lines.append(f"- **Truth source:** `{truth_file_name}` (auto-detected by "
                  "`er_metrics.detect_truth_file` because the filename "
-                 "contains a `G`).")
+                 f"contains a `{truth_letter}`).")
     if df["truth_size_distribution"].notna().any():
         lines.append(f"- **Truth cluster size distribution:** "
                      f"`{df['truth_size_distribution'].dropna().iloc[0]}`")
@@ -516,7 +530,7 @@ def build_readme(df, summary_df):
         lines.append("```")
         lines.append("")
         lines.append(f"Auto-detected truth file for `{DATASET}` is "
-                     "`truthABCgoodDQ.txt`. The pipeline is deterministic "
+                     f"`{truth_file_name}`. The pipeline is deterministic "
                      "given the same input and CLI args (no RNG seeds are "
                      "exposed because the algorithm itself contains no "
                      "stochastic steps).")

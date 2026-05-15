@@ -25,59 +25,67 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 5000,
-  "n_unique_records": 5000,
+  "n_records_total": 1000,
+  "n_unique_records": 1000,
   "predicted_clusters": {
-    "n_total": 2322,
-    "n_multi": 1277,
-    "n_singletons": 1045,
+    "n_total": 458,
+    "n_multi": 243,
+    "n_singletons": 215,
     "min_size": 1,
-    "max_size": 9,
-    "mean_size": 2.153,
+    "max_size": 10,
+    "mean_size": 2.183,
     "median_size": 2.0,
     "size_distribution": {
-      "1": 1045,
-      "2": 491,
-      "3": 375,
-      "4": 278,
-      "5": 87,
-      "6": 30,
-      "7": 9,
-      "8": 5,
-      "9": 2
+      "1": 215,
+      "2": 88,
+      "3": 94,
+      "4": 22,
+      "5": 17,
+      "6": 9,
+      "7": 6,
+      "8": 6,
+      "10": 1
     }
   },
   "truth_clusters": {
-    "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 2183,
+    "truth_file": "../truthABCpoorDQ.txt",
+    "n_total": 195,
     "min_size": 1,
-    "max_size": 6,
-    "mean_size": 2.29,
-    "median_size": 2,
+    "max_size": 17,
+    "mean_size": 5.128,
+    "median_size": 5,
     "size_distribution": {
-      "1": 741,
-      "2": 597,
-      "3": 440,
-      "4": 298,
-      "5": 89,
-      "6": 18
+      "1": 16,
+      "2": 15,
+      "3": 30,
+      "4": 25,
+      "5": 33,
+      "6": 26,
+      "7": 10,
+      "8": 19,
+      "9": 9,
+      "10": 4,
+      "11": 3,
+      "12": 3,
+      "14": 1,
+      "17": 1
     }
   },
   "pair_metrics": {
-    "TP": 4006,
-    "E": 4865,
-    "L": 5005,
-    "FP": 999,
-    "FN": 859,
-    "precision": 0.8004,
-    "recall": 0.8234,
-    "f1": 0.8118
+    "TP": 798,
+    "E": 2811,
+    "L": 1146,
+    "FP": 348,
+    "FN": 2013,
+    "precision": 0.6963,
+    "recall": 0.2839,
+    "f1": 0.4033
   },
-  "size_distribution_l1": 525,
-  "cluster_count_diff": 139,
+  "size_distribution_l1": 409,
+  "cluster_count_diff": 263,
   "timings_seconds": {
-    "recursive": 1.012,
-    "filter": 0.131,
-    "cluster": 0.333
+    "recursive": 0.389,
+    "filter": 0.038,
+    "cluster": 0.06
   }
 }

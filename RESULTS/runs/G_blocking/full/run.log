@@ -1,26 +1,26 @@
 # group=G_blocking config_id=full
 # label=full blocking
-# cmd=/usr/local/bin/python recursive_algo1_2_v2.py --input ../S14GX.txt --truth-dir .. --clusters-json /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters.json --full-blocking --max-block-pair-cost 100000
+# cmd=/usr/local/bin/python recursive_algo1_2_v2.py --input ../S8P.txt --truth-dir .. --clusters-json /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters.json --full-blocking --max-block-pair-cost 100000
 
 Starting...
-Loaded 5000 records
+Loaded 1000 records
 Replaced non-word characters with spaces in extracted tokens
-Built token frequency dict with 8767 unique tokens
-Stop-word removal: dropped 69 tokens with freq > 60
-  Examples: ['NC', 'SALEM', 'WINSTON', 'DR', 'ADAMS', 'RD', 'KERNERSVILLE', '27284', '27106', 'CT', 'ST', 'LN', '27103', 'ALEXANDER', '27105']
-Rebuilt token frequency dict: 8698 unique tokens remain
+Built token frequency dict with 3942 unique tokens
+Stop-word removal: dropped 20 tokens with freq > 60
+  Examples: ['CA', 'FL', 'BOX', 'APT', 'TX', 'PO', 'L', 'DR', 'ST', 'A', 'E', 'AVE', 'C', 'M', 'W']
+Rebuilt token frequency dict: 3922 unique tokens remain
 
 DF distribution percentiles (post-cleanup):
-  p50=2, p90=6, p95=10, p99=25
+  p50=1, p90=5, p95=7, p99=17
 Record-length percentiles (distinct tokens, post-cleanup):
-  p50=6, p90=7, p95=8, p99=10
-init_df_max derived from percentile 0.95: 10
-[legacy] Mode token length: 5
-[legacy] stop_k = floor(0.6 * 5) = 3
-[diagnostic] Legacy heuristic stop_k(factor=0.6) = 3 (not used unless --stop-k* given)
+  p50=9, p90=12, p95=13, p99=15
+init_df_max derived from percentile 0.95: 7
+[legacy] Mode token length: 8
+[legacy] stop_k = floor(0.6 * 8) = 4
+[diagnostic] Legacy heuristic stop_k(factor=0.6) = 4 (not used unless --stop-k* given)
 
 Resolved parameters:
-  init_df_max         = 10
+  init_df_max         = 7
   max_recursion_depth = 5
   min_intra_freq      = 2
   min_blk_token_len   = 4
@@ -36,85 +36,85 @@ Resolved parameters:
 Creating initial blocks...
 Blocking mode: FULL (Papadakis redundancy-positive). Length / numeric / DF-cap filters are disabled; only freq >= 2 enforced.
 Blocking gate counters (per-record token instances):
-  freq < 2:                          3862
-  kept (became block memberships):   24153
-  unique blocking keys produced:     4836
-Initial blocks created: 4836
-[metrics] Auto-detected truth file: ../truthABCgoodDQ.txt
+  freq < 2:                          2128
+  kept (became block memberships):   7362
+  unique blocking keys produced:     1794
+Initial blocks created: 1794
+[metrics] Auto-detected truth file: ../truthABCpoorDQ.txt
 
 ######################################################################
 # RUN: merge=True, purge=True
 ######################################################################
 
 --- depth=1, effective min_intra_freq=2, max_depth=5 (do_merge=True, do_purge=True) ---
-Current number of blocks: 4836
+Current number of blocks: 1794
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 0.64 seconds, produced 15546 blocks
+refine_blocks took 0.24 seconds, produced 6122 blocks
 Merging blocks...
-merge_blocks took 0.09 seconds, result: 5031 blocks
+merge_blocks took 0.03 seconds, result: 2158 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.06 seconds, dropped 3456, result: 1575 blocks
+purge_subset_blocks took 0.02 seconds, dropped 1581, result: 577 blocks
 
 --- depth=2, effective min_intra_freq=2, max_depth=5 (do_merge=True, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 0.34 seconds, produced 12290 blocks
+refine_blocks took 0.13 seconds, produced 4547 blocks
 Merging blocks...
-merge_blocks took 0.07 seconds, result: 4978 blocks
+merge_blocks took 0.03 seconds, result: 2058 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.06 seconds, dropped 3403, result: 1575 blocks
+purge_subset_blocks took 0.02 seconds, dropped 1481, result: 577 blocks
 
 --- depth=3, effective min_intra_freq=3, max_depth=5 (do_merge=True, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=3...
-refine_blocks took 0.25 seconds, produced 6072 blocks
+refine_blocks took 0.08 seconds, produced 1620 blocks
 Merging blocks...
-merge_blocks took 0.06 seconds, result: 3386 blocks
+merge_blocks took 0.01 seconds, result: 1271 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.05 seconds, dropped 1811, result: 1575 blocks
+purge_subset_blocks took 0.01 seconds, dropped 694, result: 577 blocks
 
 --- depth=4, effective min_intra_freq=4, max_depth=5 (do_merge=True, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=4...
-refine_blocks took 0.17 seconds, produced 2647 blocks
+refine_blocks took 0.05 seconds, produced 489 blocks
 Merging blocks...
-merge_blocks took 0.03 seconds, result: 2470 blocks
+merge_blocks took 0.01 seconds, result: 903 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.04 seconds, dropped 895, result: 1575 blocks
+purge_subset_blocks took 0.01 seconds, dropped 326, result: 577 blocks
 
 --- depth=5, effective min_intra_freq=5, max_depth=5 (do_merge=True, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=5...
-refine_blocks took 0.12 seconds, produced 1003 blocks
+refine_blocks took 0.05 seconds, produced 193 blocks
 Merging blocks...
-merge_blocks took 0.02 seconds, result: 2002 blocks
+merge_blocks took 0.01 seconds, result: 730 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.03 seconds, dropped 427, result: 1575 blocks
+purge_subset_blocks took 0.01 seconds, dropped 153, result: 577 blocks
 
 --- depth=6, effective min_intra_freq=6, max_depth=5 (do_merge=True, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Stopping: depth > max_recursion_depth
 
-Peak block count during recursion: 4836 (at depth=0)
-Clustering on FINAL snapshot (1575 blocks)
+Peak block count during recursion: 1794 (at depth=0)
+Clustering on FINAL snapshot (577 blocks)
 
 Building ARCS weighted graph (weighting=uniform)...
   [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
-  Graph built in 1.15s — 62217 edges
-  ARCS edge-weight histogram (62217 edges, range [0.0013, 0.8333]):
-    [0.0013, 0.0845): 58267
-    [0.0845, 0.1677): 1801
-    [0.1677, 0.2509): 1096
-    [0.2509, 0.3341): 598
-    [0.3341, 0.4173): 279
-    [0.4173, 0.5005): 111
-    [0.5005, 0.5837): 36
-    [0.5837, 0.6669): 16
-    [0.6669, 0.7501): 10
-    [0.7501, 0.8333): 3
-  Edges kept (weight >= 0.2): 1676 / 62217
-  Clusters (pre-density): 821 multi-record, 2946 singletons
-  Wrote 3767 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p1.json
+  Graph built in 0.15s — 7114 edges
+  ARCS edge-weight histogram (7114 edges, range [0.0015, 0.7000]):
+    [0.0015, 0.0714): 6544
+    [0.0714, 0.1412): 265
+    [0.1412, 0.2111): 153
+    [0.2111, 0.2809): 75
+    [0.2809, 0.3508): 45
+    [0.3508, 0.4206): 16
+    [0.4206, 0.4905): 7
+    [0.4905, 0.5603): 6
+    [0.5603, 0.6302): 2
+    [0.6302, 0.7000): 1
+  Edges kept (weight >= 0.2): 173 / 7114
+  Clusters (pre-density): 116 multi-record, 730 singletons
+  Wrote 846 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p1.json
   Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p1.metrics.json
   Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p1.metrics.log
 
@@ -123,69 +123,69 @@ Building ARCS weighted graph (weighting=uniform)...
 ######################################################################
 
 --- depth=1, effective min_intra_freq=2, max_depth=5 (do_merge=True, do_purge=False) ---
-Current number of blocks: 4836
+Current number of blocks: 1794
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 0.61 seconds, produced 15546 blocks
+refine_blocks took 0.24 seconds, produced 6122 blocks
 Merging blocks...
-merge_blocks took 0.09 seconds, result: 5031 blocks
+merge_blocks took 0.03 seconds, result: 2158 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=2, effective min_intra_freq=2, max_depth=5 (do_merge=True, do_purge=False) ---
-Current number of blocks: 5031
+Current number of blocks: 2158
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 0.49 seconds, produced 17154 blocks
+refine_blocks took 0.22 seconds, produced 7717 blocks
 Merging blocks...
-merge_blocks took 0.09 seconds, result: 5040 blocks
+merge_blocks took 0.04 seconds, result: 2180 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=3, effective min_intra_freq=3, max_depth=5 (do_merge=True, do_purge=False) ---
-Current number of blocks: 5040
+Current number of blocks: 2180
 Calling refine_blocks with min_intra_freq=3...
-refine_blocks took 0.36 seconds, produced 7805 blocks
+refine_blocks took 0.13 seconds, produced 2210 blocks
 Merging blocks...
-merge_blocks took 0.09 seconds, result: 5040 blocks
+merge_blocks took 0.03 seconds, result: 2180 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=4, effective min_intra_freq=4, max_depth=5 (do_merge=True, do_purge=False) ---
-Current number of blocks: 5040
+Current number of blocks: 2180
 Calling refine_blocks with min_intra_freq=4...
-refine_blocks took 0.24 seconds, produced 3210 blocks
+refine_blocks took 0.10 seconds, produced 640 blocks
 Merging blocks...
-merge_blocks took 0.06 seconds, result: 5040 blocks
+merge_blocks took 0.03 seconds, result: 2180 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=5, effective min_intra_freq=5, max_depth=5 (do_merge=True, do_purge=False) ---
-Current number of blocks: 5040
+Current number of blocks: 2180
 Calling refine_blocks with min_intra_freq=5...
-refine_blocks took 0.19 seconds, produced 1167 blocks
+refine_blocks took 0.09 seconds, produced 245 blocks
 Merging blocks...
-merge_blocks took 0.06 seconds, result: 5040 blocks
+merge_blocks took 0.02 seconds, result: 2180 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=6, effective min_intra_freq=6, max_depth=5 (do_merge=True, do_purge=False) ---
-Current number of blocks: 5040
+Current number of blocks: 2180
 Stopping: depth > max_recursion_depth
 
-Peak block count during recursion: 5040 (at depth=2)
-Clustering on FINAL snapshot (5040 blocks)
+Peak block count during recursion: 2180 (at depth=2)
+Clustering on FINAL snapshot (2180 blocks)
 
 Building ARCS weighted graph (weighting=uniform)...
   [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
-  Graph built in 0.40s — 12877 edges
-  ARCS edge-weight histogram (12877 edges, range [0.0060, 1.5000]):
-    [0.0060, 0.1554): 8528
-    [0.1554, 0.3048): 1478
-    [0.3048, 0.4542): 889
-    [0.4542, 0.6036): 550
-    [0.6036, 0.7530): 531
-    [0.7530, 0.9024): 347
-    [0.9024, 1.0518): 263
-    [1.0518, 1.2012): 273
-    [1.2012, 1.3506): 17
-    [1.3506, 1.5000): 1
-  Edges kept (weight >= 0.2): 3917 / 12877
-  Clusters (pre-density): 1438 multi-record, 898 singletons
-  Wrote 2336 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p0.json
+  Graph built in 0.05s — 1263 edges
+  ARCS edge-weight histogram (1263 edges, range [0.0139, 1.3333]):
+    [0.0139, 0.1458): 750
+    [0.1458, 0.2778): 281
+    [0.2778, 0.4097): 107
+    [0.4097, 0.5417): 72
+    [0.5417, 0.6736): 31
+    [0.6736, 0.8056): 14
+    [0.8056, 0.9375): 1
+    [0.9375, 1.0694): 3
+    [1.0694, 1.2014): 3
+    [1.2014, 1.3333): 1
+  Edges kept (weight >= 0.2): 391 / 1263
+  Clusters (pre-density): 242 multi-record, 400 singletons
+  Wrote 642 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p0.json
   Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p0.metrics.json
   Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m1_p0.metrics.log
 
@@ -194,74 +194,74 @@ Building ARCS weighted graph (weighting=uniform)...
 ######################################################################
 
 --- depth=1, effective min_intra_freq=2, max_depth=5 (do_merge=False, do_purge=True) ---
-Current number of blocks: 4836
+Current number of blocks: 1794
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 0.61 seconds, produced 15546 blocks
+refine_blocks took 0.25 seconds, produced 6122 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 20382 blocks
+  result: 7916 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.24 seconds, dropped 18807, result: 1575 blocks
+purge_subset_blocks took 0.09 seconds, dropped 7339, result: 577 blocks
 
 --- depth=2, effective min_intra_freq=2, max_depth=5 (do_merge=False, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 0.35 seconds, produced 12271 blocks
+refine_blocks took 0.13 seconds, produced 4543 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 13846 blocks
+  result: 5120 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.16 seconds, dropped 12271, result: 1575 blocks
+purge_subset_blocks took 0.06 seconds, dropped 4543, result: 577 blocks
 
 --- depth=3, effective min_intra_freq=3, max_depth=5 (do_merge=False, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=3...
-refine_blocks took 0.25 seconds, produced 6081 blocks
+refine_blocks took 0.08 seconds, produced 1637 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 7656 blocks
+  result: 2214 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.11 seconds, dropped 6081, result: 1575 blocks
+purge_subset_blocks took 0.03 seconds, dropped 1637, result: 577 blocks
 
 --- depth=4, effective min_intra_freq=4, max_depth=5 (do_merge=False, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=4...
-refine_blocks took 0.17 seconds, produced 2679 blocks
+refine_blocks took 0.05 seconds, produced 497 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 4254 blocks
+  result: 1074 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.07 seconds, dropped 2679, result: 1575 blocks
+purge_subset_blocks took 0.01 seconds, dropped 497, result: 577 blocks
 
 --- depth=5, effective min_intra_freq=5, max_depth=5 (do_merge=False, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Calling refine_blocks with min_intra_freq=5...
-refine_blocks took 0.12 seconds, produced 1043 blocks
+refine_blocks took 0.04 seconds, produced 203 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 2618 blocks
+  result: 780 blocks
 Purging subset blocks...
-purge_subset_blocks took 0.04 seconds, dropped 1043, result: 1575 blocks
+purge_subset_blocks took 0.01 seconds, dropped 203, result: 577 blocks
 
 --- depth=6, effective min_intra_freq=6, max_depth=5 (do_merge=False, do_purge=True) ---
-Current number of blocks: 1575
+Current number of blocks: 577
 Stopping: depth > max_recursion_depth
 
-Peak block count during recursion: 4836 (at depth=0)
-Clustering on FINAL snapshot (1575 blocks)
+Peak block count during recursion: 1794 (at depth=0)
+Clustering on FINAL snapshot (577 blocks)
 
 Building ARCS weighted graph (weighting=uniform)...
   [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
-  Graph built in 1.15s — 62217 edges
-  ARCS edge-weight histogram (62217 edges, range [0.0013, 0.8333]):
-    [0.0013, 0.0845): 58267
-    [0.0845, 0.1677): 1801
-    [0.1677, 0.2509): 1096
-    [0.2509, 0.3341): 598
-    [0.3341, 0.4173): 279
-    [0.4173, 0.5005): 111
-    [0.5005, 0.5837): 36
-    [0.5837, 0.6669): 16
-    [0.6669, 0.7501): 10
-    [0.7501, 0.8333): 3
-  Edges kept (weight >= 0.2): 1676 / 62217
-  Clusters (pre-density): 821 multi-record, 2946 singletons
-  Wrote 3767 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p1.json
+  Graph built in 0.15s — 7114 edges
+  ARCS edge-weight histogram (7114 edges, range [0.0015, 0.7000]):
+    [0.0015, 0.0714): 6544
+    [0.0714, 0.1412): 265
+    [0.1412, 0.2111): 153
+    [0.2111, 0.2809): 75
+    [0.2809, 0.3508): 45
+    [0.3508, 0.4206): 16
+    [0.4206, 0.4905): 7
+    [0.4905, 0.5603): 6
+    [0.5603, 0.6302): 2
+    [0.6302, 0.7000): 1
+  Edges kept (weight >= 0.2): 173 / 7114
+  Clusters (pre-density): 116 multi-record, 730 singletons
+  Wrote 846 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p1.json
   Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p1.metrics.json
   Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p1.metrics.log
 
@@ -270,81 +270,81 @@ Building ARCS weighted graph (weighting=uniform)...
 ######################################################################
 
 --- depth=1, effective min_intra_freq=2, max_depth=5 (do_merge=False, do_purge=False) ---
-Current number of blocks: 4836
+Current number of blocks: 1794
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 0.58 seconds, produced 15546 blocks
+refine_blocks took 0.24 seconds, produced 6122 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 20382 blocks
+  result: 7916 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=2, effective min_intra_freq=2, max_depth=5 (do_merge=False, do_purge=False) ---
-Current number of blocks: 20382
+Current number of blocks: 7916
 Calling refine_blocks with min_intra_freq=2...
-refine_blocks took 1.67 seconds, produced 34768 blocks
+refine_blocks took 0.73 seconds, produced 15555 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 39604 blocks
+  result: 17349 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=3, effective min_intra_freq=3, max_depth=5 (do_merge=False, do_purge=False) ---
-Current number of blocks: 39604
+Current number of blocks: 17349
 Calling refine_blocks with min_intra_freq=3...
-refine_blocks took 1.80 seconds, produced 20001 blocks
+refine_blocks took 0.70 seconds, produced 6020 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 44558 blocks
+  result: 18980 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=4, effective min_intra_freq=4, max_depth=5 (do_merge=False, do_purge=False) ---
-Current number of blocks: 44558
+Current number of blocks: 18980
 Calling refine_blocks with min_intra_freq=4...
-refine_blocks took 1.22 seconds, produced 7443 blocks
+refine_blocks took 0.53 seconds, produced 1393 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 44993 blocks
+  result: 19074 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=5, effective min_intra_freq=5, max_depth=5 (do_merge=False, do_purge=False) ---
-Current number of blocks: 44993
+Current number of blocks: 19074
 Calling refine_blocks with min_intra_freq=5...
-refine_blocks took 0.91 seconds, produced 2294 blocks
+refine_blocks took 0.46 seconds, produced 452 blocks
 Skipping merge_blocks (do_merge=False); naive concat...
-  result: 45004 blocks
+  result: 19075 blocks
 Skipping purge_subset_blocks (do_purge=False)
 
 --- depth=6, effective min_intra_freq=6, max_depth=5 (do_merge=False, do_purge=False) ---
-Current number of blocks: 45004
+Current number of blocks: 19075
 Stopping: depth > max_recursion_depth
 
-Peak block count during recursion: 45004 (at depth=5)
-Clustering on FINAL snapshot (45004 blocks)
+Peak block count during recursion: 19075 (at depth=5)
+Clustering on FINAL snapshot (19075 blocks)
 
 Building ARCS weighted graph (weighting=uniform)...
   [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
-  Graph built in 0.22s — 2943 edges
-  ARCS edge-weight histogram (2943 edges, range [0.0167, 1.5000]):
-    [0.0167, 0.1650): 575
-    [0.1650, 0.3133): 151
-    [0.3133, 0.4617): 190
-    [0.4617, 0.6100): 130
-    [0.6100, 0.7583): 293
-    [0.7583, 0.9067): 193
-    [0.9067, 1.0550): 481
-    [1.0550, 1.2033): 229
-    [1.2033, 1.3517): 115
-    [1.3517, 1.5000): 586
-  Edges kept (weight >= 0.2): 2341 / 2943
-  Clusters (pre-density): 1659 multi-record, 1288 singletons
-  Wrote 2947 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p0.json
+  Graph built in 0.04s — 614 edges
+  ARCS edge-weight histogram (614 edges, range [0.0179, 1.5000]):
+    [0.0179, 0.1661): 253
+    [0.1661, 0.3143): 114
+    [0.3143, 0.4625): 62
+    [0.4625, 0.6107): 71
+    [0.6107, 0.7589): 50
+    [0.7589, 0.9071): 35
+    [0.9071, 1.0554): 12
+    [1.0554, 1.2036): 11
+    [1.2036, 1.3518): 4
+    [1.3518, 1.5000): 2
+  Edges kept (weight >= 0.2): 329 / 614
+  Clusters (pre-density): 281 multi-record, 397 singletons
+  Wrote 678 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p0.json
   Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p0.metrics.json
   Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/full/clusters_m0_p0.metrics.log
 
 
 ==============================================================================================================
 ABLATION SUMMARY
-mode=full, init_df_max=10, max_recursion_depth=5, min_intra_freq=2, tau=0.2, top_k=3, filter_mode=size, min_block_size=2, arcs_weighting=uniform, density_floor=0.0, cluster_on=final
+mode=full, init_df_max=7, max_recursion_depth=5, min_intra_freq=2, tau=0.2, top_k=3, filter_mode=size, min_block_size=2, arcs_weighting=uniform, density_floor=0.0, cluster_on=final
 ==============================================================================================================
 merge purge  blks(rec)   pairs(rec)  blks(flt)   pairs(flt)  clusters  multi  single  t_rec(s)  t_flt(s)  t_clu(s)  peak(MB)
 --------------------------------------------------------------------------------------------------------------
-    T     T       1575       117491       1575        69555      3767    821    2946      2.07      0.11      1.36     248.3
-    T     F       5040       134684       4752        18380      2336   1438     898      2.30      0.21      0.45     249.5
-    F     T       1575       117491       1575        69555      3767    821    2946      2.15      0.10      1.35     248.1
-    F     F      45004       264415       5339         7026      2947   1659    1288      6.23      0.80      0.26     260.7
+    T     T        577        26896        575         7944       846    116     730      0.73      0.03      0.17      72.0
+    T     F       2180        32938       1174         1480       642    242     400      0.92      0.05      0.06      72.8
+    F     T        577        26896        575         7944       846    116     730      0.77      0.03      0.18      71.8
+    F     F      19075        68299        986         1010       678    281     397      2.68      0.27      0.04      76.6
 ==============================================================================================================

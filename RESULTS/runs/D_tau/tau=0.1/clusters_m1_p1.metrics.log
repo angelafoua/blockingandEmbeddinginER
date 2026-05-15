@@ -22,54 +22,61 @@
   arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 0.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
 
 [Records]
-  total                    = 5000
-  unique                   = 5000
+  total                    = 1000
+  unique                   = 1000
 
 [Predicted Clusters]
-  total                    = 2897
-  multi-record             = 1178
-  singletons               = 1719
-  size  min / max          = 1 / 8
-  size  mean / median      = 1.726 / 1
+  total                    = 629
+  multi-record             = 226
+  singletons               = 403
+  size  min / max          = 1 / 7
+  size  mean / median      = 1.59 / 1
   size distribution (size: count):
-    size   1 : 1719
-    size   2 : 561
-    size   3 : 382
-    size   4 : 174
-    size   5 : 52
-    size   6 : 7
+    size   1 : 403
+    size   2 : 118
+    size   3 : 85
+    size   4 : 12
+    size   5 : 9
+    size   6 : 1
     size   7 : 1
-    size   8 : 1
 
-[Truth Clusters]  (../truthABCgoodDQ.txt)
-  total                    = 2183
-  size  min / max          = 1 / 6
-  size  mean / median      = 2.29 / 2
+[Truth Clusters]  (../truthABCpoorDQ.txt)
+  total                    = 195
+  size  min / max          = 1 / 17
+  size  mean / median      = 5.128 / 5
   size distribution (size: count):
-    size   1 : 741
-    size   2 : 597
-    size   3 : 440
-    size   4 : 298
-    size   5 : 89
-    size   6 : 18
+    size   1 : 16
+    size   2 : 15
+    size   3 : 30
+    size   4 : 25
+    size   5 : 33
+    size   6 : 26
+    size   7 : 10
+    size   8 : 19
+    size   9 : 9
+    size  10 : 4
+    size  11 : 3
+    size  12 : 3
+    size  14 : 1
+    size  17 : 1
 
 [Distribution Match]
-  cluster count diff       = 714  (predicted - truth)
-  size-distribution L1     = 1246
+  cluster count diff       = 434  (predicted - truth)
+  size-distribution L1     = 656
 
 [Pair-based Metrics]
-  TP                       = 3191
-  FP                       = 234
-  FN                       = 1674
-  Linked Pairs (L)         = 3425
-  Expected Pairs (E)       = 4865
-  Precision                = 0.9317
-  Recall                   = 0.6559
-  F1                       = 0.7698
+  TP                       = 419
+  FP                       = 152
+  FN                       = 2392
+  Linked Pairs (L)         = 571
+  Expected Pairs (E)       = 2811
+  Precision                = 0.7338
+  Recall                   = 0.1491
+  F1                       = 0.2478
 
 [Timings (seconds)]
-  recursive                = 0.885
-  filter                   = 0.077
-  cluster                  = 0.318
+  recursive                = 0.295
+  filter                   = 0.021
+  cluster                  = 0.068
 
 ========================================================================
