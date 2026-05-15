@@ -3,10 +3,10 @@
   "config_id": "fm=keylen",
   "label": "filter_mode=keylen",
   "cmd": [
-    "/usr/local/bin/python3",
+    "/usr/local/bin/python",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S7GX.txt",
+    "../S12PX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -19,5 +19,5 @@
     "keylen"
   ],
   "returncode": 0,
-  "wallclock_s": 28.605874061584473
+  "wallclock_s": 25.685655117034912
 }

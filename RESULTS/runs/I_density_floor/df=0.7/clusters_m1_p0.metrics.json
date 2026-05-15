@@ -25,55 +25,77 @@
       "pair_sim_weight": 1.0
     }
   },
-  "n_records_total": 2912,
-  "n_unique_records": 2912,
+  "n_records_total": 6000,
+  "n_unique_records": 6000,
   "predicted_clusters": {
-    "n_total": 1927,
-    "n_multi": 742,
-    "n_singletons": 1185,
-    "min_size": 1,
-    "max_size": 5,
-    "mean_size": 1.511,
-    "median_size": 1,
-    "size_distribution": {
-      "1": 1185,
-      "2": 536,
-      "3": 175,
-      "4": 25,
-      "5": 6
-    }
-  },
-  "truth_clusters": {
-    "truth_file": "../truthABCgoodDQ.txt",
-    "n_total": 1827,
+    "n_total": 4273,
+    "n_multi": 1511,
+    "n_singletons": 2762,
     "min_size": 1,
     "max_size": 6,
-    "mean_size": 1.594,
+    "mean_size": 1.404,
     "median_size": 1,
     "size_distribution": {
-      "1": 1056,
-      "2": 516,
-      "3": 205,
-      "4": 42,
-      "5": 7,
+      "1": 2762,
+      "2": 1351,
+      "3": 114,
+      "4": 37,
+      "5": 8,
       "6": 1
     }
   },
-  "pair_metrics": {
-    "TP": 1192,
-    "E": 1468,
-    "L": 1271,
-    "FP": 79,
-    "FN": 276,
-    "precision": 0.9378,
-    "recall": 0.812,
-    "f1": 0.8704
+  "truth_clusters": {
+    "truth_file": "../truthABCpoorDQ.txt",
+    "n_total": 693,
+    "min_size": 1,
+    "max_size": 35,
+    "mean_size": 8.658,
+    "median_size": 8,
+    "size_distribution": {
+      "1": 17,
+      "2": 40,
+      "3": 39,
+      "4": 65,
+      "5": 52,
+      "6": 51,
+      "7": 58,
+      "8": 55,
+      "9": 51,
+      "10": 60,
+      "11": 33,
+      "12": 32,
+      "13": 26,
+      "14": 21,
+      "15": 19,
+      "16": 13,
+      "17": 18,
+      "18": 14,
+      "19": 11,
+      "20": 3,
+      "21": 5,
+      "22": 3,
+      "23": 2,
+      "25": 2,
+      "26": 1,
+      "28": 1,
+      "35": 1
+    }
   },
-  "size_distribution_l1": 198,
-  "cluster_count_diff": 100,
+  "pair_metrics": {
+    "TP": 1881,
+    "E": 31735,
+    "L": 2010,
+    "FP": 129,
+    "FN": 29854,
+    "precision": 0.9358,
+    "recall": 0.0593,
+    "f1": 0.1115
+  },
+  "size_distribution_l1": 4682,
+  "cluster_count_diff": 3580,
   "timings_seconds": {
-    "recursive": 0.515,
-    "filter": 0.075,
-    "cluster": 0.181
+    "recursive": 2.383,
+    "filter": 0.249,
+    "cluster": 0.55
   }
 }

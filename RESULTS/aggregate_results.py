@@ -243,12 +243,15 @@ def build_readme(df, summary_df):
     lines.append(f"- **Source file:** `{DATASET}`")
     lines.append(f"- **Records loaded:** {n_records}")
     lines.append(f"- **Unique records:** {n_unique}")
-    lines.append(f"- **Truth clusters (good-DQ ground truth):** "
+    _dq = "poor" if "P" in DS_BASE.upper() else "good"
+    _truth_name = f"truthABC{'poorDQ' if _dq == 'poor' else 'goodDQ'}.txt"
+    _truth_key = "P" if _dq == "poor" else "G"
+    lines.append(f"- **Truth clusters ({_dq}-DQ ground truth):** "
                  f"{truth_clusters}")
     lines.append(f"- **Truth equivalent pairs (E):** {expected_pairs}")
-    lines.append("- **Truth source:** `truthABCgoodDQ.txt` (auto-detected by "
-                 "`er_metrics.detect_truth_file` because the filename "
-                 "contains a `G`).")
+    lines.append(f"- **Truth source:** `{_truth_name}` (auto-detected by "
+                 f"`er_metrics.detect_truth_file` because the filename "
+                 f"contains a `{_truth_key}`).")
     if df["truth_size_distribution"].notna().any():
         lines.append(f"- **Truth cluster size distribution:** "
                      f"`{df['truth_size_distribution'].dropna().iloc[0]}`")
@@ -516,7 +519,7 @@ def build_readme(df, summary_df):
         lines.append("```")
         lines.append("")
         lines.append(f"Auto-detected truth file for `{DATASET}` is "
-                     "`truthABCgoodDQ.txt`. The pipeline is deterministic "
+                     f"`{_truth_name}`. The pipeline is deterministic "
                      "given the same input and CLI args (no RNG seeds are "
                      "exposed because the algorithm itself contains no "
                      "stochastic steps).")

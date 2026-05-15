@@ -3,10 +3,10 @@
   "config_id": "d=3",
   "label": "max_depth=3",
   "cmd": [
-    "/usr/local/bin/python3",
+    "/usr/local/bin/python",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S7GX.txt",
+    "../S12PX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -19,5 +19,5 @@
     "3"
   ],
   "returncode": 0,
-  "wallclock_s": 28.523528575897217
+  "wallclock_s": 21.669931650161743
 }

@@ -1,22 +1,22 @@
 # group=G_blocking config_id=hierarchical
 # label=hierarchical blocking
-# cmd=/usr/local/bin/python3 recursive_algo1_2_v2.py --input ../S7GX.txt --truth-dir .. --clusters-json /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json --hierarchical-blocking
+# cmd=/usr/local/bin/python recursive_algo1_2_v2.py --input ../S12PX.txt --truth-dir .. --clusters-json /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json --hierarchical-blocking
 
 Starting...
-Loaded 2912 records
+Loaded 6000 records
 Replaced non-word characters with spaces in extracted tokens
-Built token frequency dict with 6851 unique tokens
-Stop-word removal: dropped 37 tokens with freq > 60
-  Examples: ['NC', 'SALEM', 'WINSTON', 'DR', 'RD', 'ADAMS', '27106', 'CT', 'KERNERSVILLE', '27284', 'ST', '27103', 'LN', '27127', '27104']
-Rebuilt token frequency dict: 6814 unique tokens remain
+Built token frequency dict with 14578 unique tokens
+Stop-word removal: dropped 90 tokens with freq > 60
+  Examples: ['CA', 'FL', 'TX', 'ST', 'DR', 'M', 'BOX', 'A', 'AVE', 'S', 'APT', 'E', 'D', 'PO', 'L']
+Rebuilt token frequency dict: 14488 unique tokens remain
 
 DF distribution percentiles (post-cleanup):
-  p50=1, p90=5, p95=8, p99=22
+  p50=1, p90=7, p95=11, p99=24
 Record-length percentiles (distinct tokens, post-cleanup):
-  p50=6, p90=8, p95=8, p99=10
+  p50=7, p90=10, p95=10, p99=12
 
 Resolved parameters (hierarchical mode):
-  n_levels            = 6814 (== unique tokens after stop-word removal)
+  n_levels            = 14488 (== unique tokens after stop-word removal)
   min_block_size      = 2
   top_k               = 3
   filter_mode         = size
@@ -26,56 +26,64 @@ Resolved parameters (hierarchical mode):
   cluster_on          = final (forced)
 
 Building hierarchical block tree...
-Hierarchical blocking: 6814 tokens, starting from 1 universe block of 2912 records
-  level 1/6814 (token='ABBOTT', DF=60): frontier=2 (split=1, carry_singleton=0, carry_no_partition=0), tree=3, max_size=2852, singletons=0
-  level 2/6814 (token='ZIGLAR', DF=60): frontier=3 (split=1, carry_singleton=0, carry_no_partition=1), tree=5, max_size=2792, singletons=0
-  level 3/6814 (token='E', DF=59): frontier=6 (split=3, carry_singleton=0, carry_no_partition=0), tree=11, max_size=2738, singletons=0
-  level 4/6814 (token='PARK', DF=59): frontier=7 (split=1, carry_singleton=0, carry_no_partition=5), tree=13, max_size=2679, singletons=0
-  level 5/6814 (token='CREEK', DF=56): frontier=10 (split=3, carry_singleton=0, carry_no_partition=4), tree=19, max_size=2631, singletons=0
-  level 1000/6814 (token='MOHAMMAD', DF=4): frontier=1977 (split=3, carry_singleton=1378, carry_no_partition=593), tree=3953, max_size=82, singletons=1383
-  level 2000/6814 (token='241112701', DF=2): frontier=2152 (split=0, carry_singleton=1595, carry_no_partition=557), tree=4303, max_size=32, singletons=1595
-  level 3000/6814 (token='KRAWLEC', DF=2): frontier=2243 (split=0, carry_singleton=1711, carry_no_partition=532), tree=4485, max_size=13, singletons=1711
-  level 4000/6814 (token='280', DF=1): frontier=2311 (split=0, carry_singleton=1825, carry_no_partition=486), tree=4621, max_size=6, singletons=1825
-  level 5000/6814 (token='7868', DF=1): frontier=2340 (split=0, carry_singleton=1877, carry_no_partition=463), tree=4679, max_size=6, singletons=1877
-  level 6000/6814 (token='JIMMY', DF=1): frontier=2359 (split=0, carry_singleton=1915, carry_no_partition=444), tree=4717, max_size=6, singletons=1915
-  level 6814/6814 (token='ZZELINKA', DF=1): frontier=2375 (split=0, carry_singleton=1947, carry_no_partition=428), tree=4749, max_size=6, singletons=1947
-Hierarchical blocking finished: 4749 total blocks across the tree (frontier at last level: 2375)
-Hierarchical tree blocks: 4749
-[metrics] Auto-detected truth file: ../truthABCgoodDQ.txt
+Hierarchical blocking: 14488 tokens, starting from 1 universe block of 6000 records
+  level 1/14488 (token='WORTH', DF=60): frontier=2 (split=1, carry_singleton=0, carry_no_partition=0), tree=3, max_size=5942, singletons=0
+  level 2/14488 (token='OAKLAND', DF=59): frontier=3 (split=1, carry_singleton=0, carry_no_partition=1), tree=5, max_size=5889, singletons=0
+  level 3/14488 (token='APTDO', DF=58): frontier=5 (split=2, carry_singleton=0, carry_no_partition=1), tree=9, max_size=5832, singletons=1
+  level 4/14488 (token='LANE', DF=58): frontier=7 (split=2, carry_singleton=1, carry_no_partition=2), tree=13, max_size=5776, singletons=1
+  level 5/14488 (token='FRANCISCO', DF=57): frontier=8 (split=1, carry_singleton=1, carry_no_partition=5), tree=15, max_size=5724, singletons=1
+  level 1000/14488 (token='ALVIN', DF=9): frontier=3695 (split=1, carry_singleton=2577, carry_no_partition=1116), tree=7389, max_size=346, singletons=2577
+  level 2000/14488 (token='ALVA', DF=6): frontier=4629 (split=0, carry_singleton=3713, carry_no_partition=916), tree=9257, max_size=76, singletons=3713
+  level 3000/14488 (token='3525', DF=4): frontier=5142 (split=0, carry_singleton=4495, carry_no_partition=647), tree=10283, max_size=25, singletons=4495
+  level 4000/14488 (token='5601', DF=3): frontier=5457 (split=0, carry_singleton=5008, carry_no_partition=449), tree=10913, max_size=11, singletons=5008
+  level 5000/14488 (token='187TH', DF=2): frontier=5673 (split=0, carry_singleton=5375, carry_no_partition=298), tree=11345, max_size=7, singletons=5375
+  level 6000/14488 (token='90028', DF=2): frontier=5777 (split=0, carry_singleton=5566, carry_no_partition=211), tree=11553, max_size=5, singletons=5566
+  level 7000/14488 (token='SEGUNDO', DF=2): frontier=5838 (split=0, carry_singleton=5680, carry_no_partition=158), tree=11675, max_size=3, singletons=5680
+  level 8000/14488 (token='19370121', DF=1): frontier=5874 (split=0, carry_singleton=5752, carry_no_partition=122), tree=11747, max_size=3, singletons=5752
+  level 9000/14488 (token='3052385333', DF=1): frontier=5893 (split=0, carry_singleton=5790, carry_no_partition=103), tree=11785, max_size=3, singletons=5790
+  level 10000/14488 (token='7136283745', DF=1): frontier=5900 (split=0, carry_singleton=5804, carry_no_partition=96), tree=11799, max_size=3, singletons=5804
+  level 11000/14488 (token='95404', DF=1): frontier=5902 (split=0, carry_singleton=5808, carry_no_partition=94), tree=11803, max_size=3, singletons=5808
+  level 12000/14488 (token='DALEHURST', DF=1): frontier=5914 (split=0, carry_singleton=5832, carry_no_partition=82), tree=11827, max_size=3, singletons=5832
+  level 13000/14488 (token='M51ST', DF=1): frontier=5929 (split=0, carry_singleton=5861, carry_no_partition=68), tree=11857, max_size=3, singletons=5861
+  level 14000/14488 (token='SUWANEE', DF=1): frontier=5935 (split=0, carry_singleton=5873, carry_no_partition=62), tree=11869, max_size=3, singletons=5873
+  level 14488/14488 (token='ZWIEFEL', DF=1): frontier=5939 (split=0, carry_singleton=5880, carry_no_partition=59), tree=11877, max_size=3, singletons=5880
+Hierarchical blocking finished: 11877 total blocks across the tree (frontier at last level: 5939)
+Hierarchical tree blocks: 11877
+[metrics] Auto-detected truth file: ../truthABCpoorDQ.txt
 
 ######################################################################
 # RUN: mode=hierarchical
 ######################################################################
 
-Hierarchical mode: 4749 blocks already produced upstream; recursion / merge / purge skipped.
-Clustering on FINAL snapshot (4749 blocks)
+Hierarchical mode: 11877 blocks already produced upstream; recursion / merge / purge skipped.
+Clustering on FINAL snapshot (11877 blocks)
 
 Building ARCS weighted graph (weighting=uniform)...
   [pair similarity] pair_sim_weight=1.0: each pair's ARCS contribution scaled by shared_tokens / (|A| + |B| - shared_tokens)
-  Graph built in 0.15s — 4199 edges
-  ARCS edge-weight histogram (4199 edges, range [0.0000, 1.5000]):
-    [0.0000, 0.1500): 3045
-    [0.1500, 0.3000): 163
-    [0.3000, 0.4500): 108
-    [0.4500, 0.6000): 166
-    [0.6000, 0.7500): 154
-    [0.7500, 0.9000): 202
-    [0.9000, 1.0500): 94
-    [1.0500, 1.2000): 206
-    [1.2000, 1.3500): 56
-    [1.3500, 1.5000): 5
-  Edges kept (weight >= 0.2): 1078 / 4199
-  Clusters (pre-density): 623 multi-record, 1452 singletons
-  Wrote 2075 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json
+  Graph built in 0.25s — 6231 edges
+  ARCS edge-weight histogram (6231 edges, range [0.0000, 1.3333]):
+    [0.0000, 0.1333): 3442
+    [0.1333, 0.2667): 1243
+    [0.2667, 0.4000): 401
+    [0.4000, 0.5333): 523
+    [0.5333, 0.6667): 408
+    [0.6667, 0.8000): 145
+    [0.8000, 0.9333): 12
+    [0.9333, 1.0667): 5
+    [1.0667, 1.2000): 49
+    [1.2000, 1.3333): 3
+  Edges kept (weight >= 0.2): 1948 / 6231
+  Clusters (pre-density): 1447 multi-record, 2734 singletons
+  Wrote 4181 clusters to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.json
   Wrote metrics JSON to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.json
   Wrote metrics log  to /home/user/blockingandEmbeddinginER/RESULTS/runs/G_blocking/hierarchical/clusters.metrics.log
 
 
 ==============================================================================================================
 RUN SUMMARY
-mode=hierarchical, n_levels=6814, tau=0.2, top_k=3, min_block_size=2, arcs_weighting=uniform, density_floor=0.0
+mode=hierarchical, n_levels=14488, tau=0.2, top_k=3, min_block_size=2, arcs_weighting=uniform, density_floor=0.0
 ==============================================================================================================
 merge purge  blks(rec)   pairs(rec)  blks(flt)   pairs(flt)  clusters  multi  single  t_rec(s)  t_flt(s)  t_clu(s)  peak(MB)
 --------------------------------------------------------------------------------------------------------------
-    F     F       4749    164802504       2497         6229      2075    623    1452      0.00      0.87      0.17     247.3
+    F     F      11877   1611748045       4769         8104      4181   1447    2734      0.00      4.34      0.29      83.4
 ==============================================================================================================
