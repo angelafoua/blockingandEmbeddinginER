@@ -3,10 +3,10 @@
   "config_id": "fm=composite",
   "label": "filter_mode=composite",
   "cmd": [
-    "/usr/local/bin/python3",
+    "/usr/local/bin/python",
     "recursive_algo1_2_v2.py",
     "--input",
-    "../S7GX.txt",
+    "../S14GX.txt",
     "--truth-dir",
     "..",
     "--clusters-json",
@@ -31,5 +31,5 @@
     "1.0"
   ],
   "returncode": 0,
-  "wallclock_s": 28.629939794540405
+  "wallclock_s": 32.84388971328735
 }
