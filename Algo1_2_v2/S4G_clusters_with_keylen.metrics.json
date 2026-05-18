@@ -1,0 +1,77 @@
+{
+  "config": {
+    "blocking_mode": "default",
+    "do_merge": true,
+    "do_purge": false,
+    "max_recursion_depth": 10,
+    "min_intra_freq": 2,
+    "top_k": 3,
+    "tau": 5.0,
+    "min_block_size": 2,
+    "filter_mode": "keylen",
+    "cluster_on": "final",
+    "arcs_weighting": "idf",
+    "density_floor": 0.0,
+    "density_min_size": 3,
+    "arcs_factors": {
+      "length_weight": 0.0,
+      "numeric_factor": 1.0,
+      "word_factor": 1.0,
+      "density_weight": 1.0,
+      "density_sample_cap": 200,
+      "pair_sim_weight": 1.0
+    }
+  },
+  "n_records_total": 1912,
+  "n_unique_records": 1912,
+  "predicted_clusters": {
+    "n_total": 1299,
+    "n_multi": 479,
+    "n_singletons": 820,
+    "min_size": 1,
+    "max_size": 6,
+    "mean_size": 1.472,
+    "median_size": 1,
+    "size_distribution": {
+      "1": 820,
+      "2": 359,
+      "3": 110,
+      "4": 7,
+      "5": 2,
+      "6": 1
+    }
+  },
+  "truth_clusters": {
+    "truth_file": "../truthABCgoodDQ.txt",
+    "n_total": 1188,
+    "min_size": 1,
+    "max_size": 6,
+    "mean_size": 1.609,
+    "median_size": 1.0,
+    "size_distribution": {
+      "1": 678,
+      "2": 339,
+      "3": 136,
+      "4": 28,
+      "5": 6,
+      "6": 1
+    }
+  },
+  "pair_metrics": {
+    "TP": 745,
+    "E": 990,
+    "L": 766,
+    "FP": 21,
+    "FN": 245,
+    "precision": 0.9726,
+    "recall": 0.7525,
+    "f1": 0.8485
+  },
+  "size_distribution_l1": 213,
+  "cluster_count_diff": 111,
+  "timings_seconds": {
+    "recursive": 4.288,
+    "filter": 0.073,
+    "cluster": 0.337
+  }
+}

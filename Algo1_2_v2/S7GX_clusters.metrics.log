@@ -1,0 +1,69 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 10
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 5.0
+  min_block_size           = 2
+  cluster_on               = final
+  arcs_weighting           = idf
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 1.0, 'density_sample_cap': 200}
+
+[Records]
+  total                    = 2912
+  unique                   = 2912
+
+[Predicted Clusters]
+  total                    = 1782
+  multi-record             = 853
+  singletons               = 929
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.634 / 1.0
+  size distribution (size: count):
+    size   1 : 929
+    size   2 : 622
+    size   3 : 195
+    size   4 : 28
+    size   5 : 6
+    size   6 : 2
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 1827
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.594 / 1
+  size distribution (size: count):
+    size   1 : 1056
+    size   2 : 516
+    size   3 : 205
+    size   4 : 42
+    size   5 : 7
+    size   6 : 1
+
+[Distribution Match]
+  cluster count diff       = -45  (predicted - truth)
+  size-distribution L1     = 259
+
+[Pair-based Metrics]
+  TP                       = 1185
+  FP                       = 280
+  FN                       = 283
+  Linked Pairs (L)         = 1465
+  Expected Pairs (E)       = 1468
+  Precision                = 0.8089
+  Recall                   = 0.8072
+  F1                       = 0.808
+
+[Timings (seconds)]
+  recursive                = 6.302
+  filter                   = 0.089
+  cluster                  = 0.305
+
+========================================================================

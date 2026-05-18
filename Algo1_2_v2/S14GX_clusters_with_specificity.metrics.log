@@ -1,0 +1,70 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 10
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 5.0
+  min_block_size           = 2
+  filter_mode              = specificity
+  cluster_on               = final
+  arcs_weighting           = idf
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 1.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
+
+[Records]
+  total                    = 5000
+  unique                   = 5000
+
+[Predicted Clusters]
+  total                    = 2861
+  multi-record             = 1463
+  singletons               = 1398
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.748 / 2
+  size distribution (size: count):
+    size   1 : 1398
+    size   2 : 913
+    size   3 : 437
+    size   4 : 102
+    size   5 : 9
+    size   6 : 2
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 2183
+  size  min / max          = 1 / 6
+  size  mean / median      = 2.29 / 2
+  size distribution (size: count):
+    size   1 : 741
+    size   2 : 597
+    size   3 : 440
+    size   4 : 298
+    size   5 : 89
+    size   6 : 18
+
+[Distribution Match]
+  cluster count diff       = 678  (predicted - truth)
+  size-distribution L1     = 1268
+
+[Pair-based Metrics]
+  TP                       = 2905
+  FP                       = 51
+  FN                       = 1960
+  Linked Pairs (L)         = 2956
+  Expected Pairs (E)       = 4865
+  Precision                = 0.9827
+  Recall                   = 0.5971
+  F1                       = 0.7429
+
+[Timings (seconds)]
+  recursive                = 11.151
+  filter                   = 0.266
+  cluster                  = 0.689
+
+========================================================================

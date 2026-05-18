@@ -1,0 +1,47 @@
+{
+  "config": {
+    "blocking_mode": "default",
+    "do_merge": true,
+    "do_purge": false,
+    "max_recursion_depth": 10,
+    "min_intra_freq": 2,
+    "top_k": 3,
+    "tau": 5.0,
+    "min_block_size": 2,
+    "cluster_on": "final",
+    "arcs_weighting": "idf",
+    "density_floor": 0.0,
+    "density_min_size": 3,
+    "arcs_factors": {
+      "length_weight": 0.0,
+      "numeric_factor": 1.0,
+      "word_factor": 1.0,
+      "density_weight": 1.0,
+      "density_sample_cap": 200
+    }
+  },
+  "n_records_total": 1912,
+  "n_unique_records": 1912,
+  "predicted_clusters": {
+    "n_total": 1172,
+    "n_multi": 553,
+    "n_singletons": 619,
+    "min_size": 1,
+    "max_size": 6,
+    "mean_size": 1.631,
+    "median_size": 1.0,
+    "size_distribution": {
+      "1": 619,
+      "2": 399,
+      "3": 127,
+      "4": 22,
+      "5": 4,
+      "6": 1
+    }
+  },
+  "timings_seconds": {
+    "recursive": 4.349,
+    "filter": 0.055,
+    "cluster": 0.184
+  }
+}

@@ -1,0 +1,71 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 10
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 5.0
+  min_block_size           = 2
+  cluster_on               = final
+  arcs_weighting           = idf
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 1.0, 'density_sample_cap': 200}
+
+[Records]
+  total                    = 5000
+  unique                   = 5000
+
+[Predicted Clusters]
+  total                    = 2416
+  multi-record             = 1563
+  singletons               = 853
+  size  min / max          = 1 / 8
+  size  mean / median      = 2.07 / 2.0
+  size distribution (size: count):
+    size   1 : 853
+    size   2 : 871
+    size   3 : 437
+    size   4 : 204
+    size   5 : 35
+    size   6 : 12
+    size   7 : 1
+    size   8 : 3
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 2183
+  size  min / max          = 1 / 6
+  size  mean / median      = 2.29 / 2
+  size distribution (size: count):
+    size   1 : 741
+    size   2 : 597
+    size   3 : 440
+    size   4 : 298
+    size   5 : 89
+    size   6 : 18
+
+[Distribution Match]
+  cluster count diff       = 233  (predicted - truth)
+  size-distribution L1     = 547
+
+[Pair-based Metrics]
+  TP                       = 3470
+  FP                       = 571
+  FN                       = 1395
+  Linked Pairs (L)         = 4041
+  Expected Pairs (E)       = 4865
+  Precision                = 0.8587
+  Recall                   = 0.7133
+  F1                       = 0.7792
+
+[Timings (seconds)]
+  recursive                = 11.191
+  filter                   = 0.161
+  cluster                  = 0.466
+
+========================================================================

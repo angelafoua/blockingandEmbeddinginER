@@ -1,0 +1,69 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 10
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 5.0
+  min_block_size           = 2
+  cluster_on               = final
+  arcs_weighting           = idf
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 1.0, 'density_sample_cap': 200}
+
+[Records]
+  total                    = 3004
+  unique                   = 3004
+
+[Predicted Clusters]
+  total                    = 1829
+  multi-record             = 883
+  singletons               = 946
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.642 / 1
+  size distribution (size: count):
+    size   1 : 946
+    size   2 : 643
+    size   3 : 195
+    size   4 : 39
+    size   5 : 5
+    size   6 : 1
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 1877
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.6 / 1
+  size distribution (size: count):
+    size   1 : 1076
+    size   2 : 538
+    size   3 : 209
+    size   4 : 46
+    size   5 : 7
+    size   6 : 1
+
+[Distribution Match]
+  cluster count diff       = -48  (predicted - truth)
+  size-distribution L1     = 258
+
+[Pair-based Metrics]
+  TP                       = 1232
+  FP                       = 295
+  FN                       = 294
+  Linked Pairs (L)         = 1527
+  Expected Pairs (E)       = 1526
+  Precision                = 0.8068
+  Recall                   = 0.8073
+  F1                       = 0.8071
+
+[Timings (seconds)]
+  recursive                = 6.816
+  filter                   = 0.085
+  cluster                  = 0.278
+
+========================================================================

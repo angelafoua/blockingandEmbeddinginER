@@ -1,0 +1,70 @@
+========================================================================
+  RUN METRICS
+========================================================================
+
+[Configuration]
+  blocking_mode            = default
+  do_merge                 = True
+  do_purge                 = False
+  max_recursion_depth      = 10
+  min_intra_freq           = 2
+  top_k                    = 3
+  tau                      = 5.0
+  min_block_size           = 2
+  filter_mode              = keylen
+  cluster_on               = final
+  arcs_weighting           = idf
+  density_floor            = 0.0
+  density_min_size         = 3
+  arcs_factors             = {'length_weight': 0.0, 'numeric_factor': 1.0, 'word_factor': 1.0, 'density_weight': 1.0, 'density_sample_cap': 200, 'pair_sim_weight': 1.0}
+
+[Records]
+  total                    = 5000
+  unique                   = 5000
+
+[Predicted Clusters]
+  total                    = 2871
+  multi-record             = 1469
+  singletons               = 1402
+  size  min / max          = 1 / 6
+  size  mean / median      = 1.742 / 2
+  size distribution (size: count):
+    size   1 : 1402
+    size   2 : 932
+    size   3 : 427
+    size   4 : 99
+    size   5 : 9
+    size   6 : 2
+
+[Truth Clusters]  (../truthABCgoodDQ.txt)
+  total                    = 2183
+  size  min / max          = 1 / 6
+  size  mean / median      = 2.29 / 2
+  size distribution (size: count):
+    size   1 : 741
+    size   2 : 597
+    size   3 : 440
+    size   4 : 298
+    size   5 : 89
+    size   6 : 18
+
+[Distribution Match]
+  cluster count diff       = 688  (predicted - truth)
+  size-distribution L1     = 1304
+
+[Pair-based Metrics]
+  TP                       = 2885
+  FP                       = 42
+  FN                       = 1980
+  Linked Pairs (L)         = 2927
+  Expected Pairs (E)       = 4865
+  Precision                = 0.9857
+  Recall                   = 0.593
+  F1                       = 0.7405
+
+[Timings (seconds)]
+  recursive                = 11.057
+  filter                   = 0.254
+  cluster                  = 0.998
+
+========================================================================
