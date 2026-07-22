@@ -23,7 +23,7 @@ Little Rock, Arkansas, USA\\
 \maketitle
 
 \begin{abstract}
-Entity resolution identifies records that refer to the same real-world entity, but exhaustive comparison requires quadratic work. Blocking reduces this cost, although fixed blocking keys often trade true-match coverage for candidate precision. This paper presents a symbolic, unsupervised framework that combines recursive co-occurrence blocking with pair-adaptive meta-blocking. Starting from token-based blocks, the method extends a block key with locally frequent co-occurring tokens under a depth-dependent frequency floor. The resulting blocks are optionally reconciled, filtered by size or refinement-aware criteria, and converted into a weighted candidate graph. Each edge combines block-level evidence with the Jaccard similarity of the corresponding record pair, allowing two pairs induced by the same block to receive different weights. Existing experimental logs cover 185 evaluated settings on each of eight person-record datasets, for 1,480 recorded evaluations. The observed best setting varies by dataset. On the poor-data-quality S8P dataset, increasing the pair-adaptation weight from 0 to 0.75 raises F1 from 0.0662 to 0.4080, while a lower graph threshold yields the best observed F1 of 0.5281. Recursive depth mainly changes precision and runtime, with limited F1 gains beyond shallow refinement. These results support recursive block construction and pair-specific edge weighting as interpretable components for label-free entity-resolution pipelines.
+Entity resolution identifies records that refer to the same real-world entity, but exhaustive comparison requires quadratic work. Blocking reduces this cost, although fixed blocking keys often trade true-match coverage for candidate precision. This paper presents a symbolic, unsupervised framework that combines recursive co-occurrence blocking with pair-adaptive meta-blocking. Starting from token-based blocks, the method extends a block key with locally frequent co-occurring tokens under a depth-dependent frequency floor. The resulting blocks are optionally reconciled, filtered by size or refinement-aware criteria, and converted into a weighted candidate graph. Each edge combines block-level evidence with the Jaccard similarity of the corresponding record pair, allowing two pairs induced by the same block to receive different weights. Existing experimental logs cover 185 evaluated settings on each of eight person-record datasets, for 1,480 recorded evaluations. The observed best setting varies by dataset. On the poor-data-quality S8P dataset, increasing the pair-adaptation weight from 0 to 0.75 raises F1 from 0.0662 to 0.4084, while a lower graph threshold yields the best observed F1 of 0.5281. Recursive depth mainly changes precision and runtime, with limited F1 gains beyond shallow refinement. These results support recursive block construction and pair-specific edge weighting as interpretable components for label-free entity-resolution pipelines.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -125,7 +125,7 @@ The existing evaluation uses eight tokenized person-record datasets containing n
 Data & Records & Clusters & Mean size & DQ \\
 \midrule
 S1G   & 50    & 30   & 1.67 & Good \\
-S2G   & 100   & 62   & --   & Good \\
+S2G   & 100   & 62   & 1.61 & Good \\
 S4G   & 1,912 & 1,188& 1.61 & Good \\
 S5G   & 3,004 & 1,877& 1.60 & Good \\
 S7GX  & 2,912 & 1,827& 1.59 & Good/X \\
@@ -193,7 +193,7 @@ S14GX & .923 & .839  & .8788 & Full, m1p0 \\
 The table also shows that dataset difficulty varies substantially. All six good-quality datasets exceed .87 best observed F1; by contrast, S8P and S12PX reach .5281 and .4185. Six of the eight oracle-best rows use the merge-only cell, but this is descriptive rather than a controlled merge ablation because the winning rows arise from different parameter groups. These results should not be interpreted as evidence that one globally deployable configuration has been found. Rather, they show that blocking permissiveness and graph pruning interact with data quality and truth-cluster structure.
 
 \subsection{Pair Adaptation and Edge Threshold}
-Table~\ref{tab:lambda} isolates the pair-adaptation sweep on S8P for the merge-only cell. Block-only weighting ($\lambda=0$) yields high recall but extremely low precision. Moving to $\lambda=.50$ raises F1 from .0662 to .3940, and $\lambda=.75$ produces the best value in this sweep, .4080. Full modulation ($\lambda=1$) raises precision further but loses too much recall. Thus, the pair term in (\ref{eq:pairweight}) is not simply a monotonic quality control; it moves the operating point from permissive block evidence toward stricter direct similarity.
+Table~\ref{tab:lambda} isolates the pair-adaptation sweep on S8P for the merge-only cell. Block-only weighting ($\lambda=0$) yields high recall but extremely low precision. Moving to $\lambda=.50$ raises F1 from .0662 to .3940, and $\lambda=.75$ produces the best value in this sweep, .4084. Full modulation ($\lambda=1$) raises precision further but loses too much recall. Thus, the pair term in (\ref{eq:pairweight}) is not simply a monotonic quality control; it moves the operating point from permissive block evidence toward stricter direct similarity.
 
 \begin{table}[t]
 \caption{Pair-Adaptation Sweep on S8P (m1p0)}
@@ -207,7 +207,7 @@ $\lambda$ & Precision & Recall & F1 \\
 0.00 & .0349 & .6450 & .0662 \\
 0.25 & .0636 & .6069 & .1151 \\
 0.50 & .3134 & .5304 & .3940 \\
-0.75 & .7416 & .2818 & \textbf{.4080} \\
+0.75 & .7416 & .2818 & \textbf{.4084} \\
 1.00 & .8379 & .1526 & .2582 \\
 \bottomrule
 \end{tabular}
