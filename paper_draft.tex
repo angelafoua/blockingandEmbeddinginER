@@ -337,7 +337,91 @@ The evaluation has five important limitations. First, all datasets contain perso
 \section{Conclusion}
 This paper presented an interpretable ER framework that recursively grows token block keys and adaptively modulates block-induced edges with pairwise Jaccard similarity. Across the existing eight-dataset parameter study, pair adaptation produces the clearest precision--recall shift, low graph thresholds are necessary on poor-quality large-cluster data, and deeper recursion yields diminishing F1 returns. Comparison with the DWM legacy system \cite{talburt2020}, which couples frequency-based blocking with exhaustive pairwise Monge-Elkan scoring, shows that the blocking-only pipeline is within 0.05 F1 on all six good-quality datasets and matches DWM on S1G, but trails by more than 0.30 F1 on the two poor-quality datasets where edit-distance pairwise scoring is decisive. The best logged configuration varies across datasets, confirming that the framework exposes meaningful operating trade-offs. Future work should evaluate fixed label-free parameter selection, blocking-specific metrics, additional domains, and lightweight pairwise signal integration to close the remaining gap on noisy data.
 
-\bibliographystyle{IEEEtran}
-\bibliography{references}
+\begin{thebibliography}{99}
+
+\bibitem{newcombe1959}
+H.~B. Newcombe, J.~M. Kennedy, S.~J. Axford, and A.~P. James,
+``Automatic linkage of vital records,''
+\emph{Science}, vol.~130, no.~3381, pp.~954--959, 1959.
+
+\bibitem{fellegi1969}
+I.~P. Fellegi and A.~B. Sunter,
+``A theory for record linkage,''
+\emph{Journal of the American Statistical Association}, vol.~64, no.~328,
+pp.~1183--1210, 1969.
+
+\bibitem{christen2012}
+P.~Christen,
+\emph{Data Matching: Concepts and Techniques for Record Linkage, Entity
+  Resolution, and Duplicate Detection}.
+Springer, 2012.
+
+\bibitem{hernandez1995}
+M.~A. Hernandez and S.~J. Stolfo,
+``The merge/purge problem for large databases,''
+in \emph{Proc. ACM SIGMOD Int. Conf. Management of Data}, 1995,
+pp.~127--138.
+
+\bibitem{yan2007}
+S.~Yan, D.~Lee, M.-Y. Kan, and C.~L. Giles,
+``Adaptive sorted neighborhood methods for efficient record linkage,''
+in \emph{Proc. 7th ACM/IEEE-CS Joint Conf. Digital Libraries}, 2007,
+pp.~185--194.
+
+\bibitem{draisbach2011}
+U.~Draisbach and F.~Naumann,
+``A generalization of blocking and windowing algorithms for duplicate
+  detection,''
+in \emph{Proc. Int. Conf. Data and Knowledge Engineering}, 2011,
+pp.~18--24.
+
+\bibitem{papadakis2014}
+G.~Papadakis, E.~Ioannou, and C.~Nieder\'{e}e,
+``Hierarchical approach to eliminate superfluous comparisons in
+  meta-blocking,''
+in \emph{Proc. EDBT/ICDT Workshops}, 2014.
+
+\bibitem{papadakis2020}
+G.~Papadakis, E.~Ioannou, E.~Thanos, and T.~Palpanas,
+``The four generations of entity resolution,''
+\emph{Synthesis Lectures on Data Management}, 2020.
+
+\bibitem{bilenko2006}
+M.~Bilenko and R.~J. Mooney,
+``Adaptive duplicate detection using learnable string similarity measures,''
+in \emph{Proc. 9th ACM SIGKDD Int. Conf. Knowledge Discovery and Data
+  Mining}, 2006.
+
+\bibitem{efthymiou2019}
+V.~Efthymiou, O.~Hassanzadeh, M.~Rodriguez-Muro, and V.~Christophides,
+``Matching web tables with knowledge base entities: From entity lookups to
+  entity embeddings,''
+in \emph{Proc. Int. Semantic Web Conf.}, 2019.
+
+\bibitem{zhang2020}
+D.~Zhang, Y.~Suhara, J.~Li, T.~Rekatsinas, and W.-C. Tan,
+``AutoBlock: A hands-free blocking framework for entity matching,''
+in \emph{Proc. VLDB Endowment}, 2020.
+
+\bibitem{thirumuruganathan2021}
+S.~Thirumuruganathan, N.~Li, J.~Kang, N.~Suganthan~G.~C., G.~Das,
+M.~Ouzzani, and N.~Tang,
+``Deep learning for blocking in entity matching: A design space
+  exploration,''
+in \emph{Proc. VLDB Endowment}, 2021.
+
+\bibitem{wang2023}
+J.~Wang, G.~Li, \emph{et al.},
+``DITTO: A simple and efficient approach for entity matching,''
+in \emph{Proc. VLDB Endowment}, 2023.
+
+\bibitem{talburt2020}
+J.~R. Talburt, A.~K. Al~Sarkhi, D.~Pullen, L.~Claassens, and R.~Wang,
+``An iterative, self-assessing entity resolution system: First steps toward
+  a data washing machine,''
+\emph{Int. J. Advanced Computer Science and Applications}, vol.~11, no.~12,
+pp.~680--689, 2020.
+
+\end{thebibliography}
 
 \end{document}
